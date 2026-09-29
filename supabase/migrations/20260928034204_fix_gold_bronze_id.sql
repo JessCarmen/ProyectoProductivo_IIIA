@@ -1,0 +1,2 @@
+ALTER TABLE gold.dim_cliente
+ADD COLUMN IF NOT EXISTS bronze_id BIGINT;

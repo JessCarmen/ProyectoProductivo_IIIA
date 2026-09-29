@@ -1,0 +1,35 @@
+# ==========================================
+# ENTORNO VIRTUAL DE PYTHON
+# ==========================================
+.venv/
+venv/
+env/
+
+# ==========================================
+# VARIABLES DE ENTORNO / CREDENCIALES
+# ==========================================
+.env
+
+# ==========================================
+# VS CODE
+# ==========================================
+.vscode/
+
+# ==========================================
+# SISTEMA OPERATIVO
+# ==========================================
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log*
+
+
+# Modelos temporales generados durante comparación
+04_ml/models/model_random_forest.pkl
+04_ml/models/model_xgboost.pkl
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
