@@ -1,11 +1,29 @@
-# 02_database - SQL de referencia
+# 02_database - Referencia de base de datos
 
-Contiene los scripts SQL de referencia para crear y validar la arquitectura de datos.
+Esta carpeta documenta la arquitectura lógica de datos del proyecto.
 
-La **fuente oficial de cambios desplegados en Supabase** es `supabase/migrations/`.
+## Fuente oficial de Supabase
 
-La arquitectura es:
+La fuente oficial y ejecutable de los cambios de base de datos es:
+
+`supabase/migrations/`
+
+Las migraciones son las que se aplican mediante:
+
+```bash
+npx supabase db push --include-all
+```
+
+## Arquitectura
 
 `Bronze -> Silver Maestros/Hechos -> Gold`
 
-Los procedimientos de limpieza se ejecutan en Silver y los procedimientos de construcción de Gold preparan `gold_ml`.
+Los Stored Procedures de limpieza y transformación se implementan dentro de las migraciones de Supabase y dejan Silver preparado para el análisis posterior.
+
+## SQL históricos
+
+Los antiguos scripts de `02_database/sql/` se conservaron únicamente como referencia histórica en:
+
+`docs/archive/database_sql_legacy/`
+
+No deben ejecutarse como un segundo pipeline ni considerarse una fuente alternativa al historial de `supabase/migrations/`.

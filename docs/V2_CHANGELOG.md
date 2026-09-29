@@ -34,4 +34,4 @@
 ## Control de Bronze
 
 - Se documenta que `02_load_bronze.py` trabaja por insercion de lote y no debe ejecutarse dos veces sobre la misma fuente sin control.
-- Se agrega el SQL V2 tambien a `02_database/sql/07_v2_priority_1_2_3.sql` como referencia.
+- Los SQL de `supabase/migrations/` quedan como fuente oficial del esquema; el SQL histórico de referencia se conserva en `docs/archive/database_sql_legacy/` sin duplicar migraciones.

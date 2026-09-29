@@ -1,23 +1,21 @@
-# ==========================================
-# ENTORNO VIRTUAL DE PYTHON
-# ==========================================
+# Python virtual environments
 .venv/
 venv/
 env/
 
-# ==========================================
-# VARIABLES DE ENTORNO / CREDENCIALES
-# ==========================================
+# Environment / credentials
 .env
 
-# ==========================================
-# VS CODE
-# ==========================================
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
 .vscode/
 
-# ==========================================
-# SISTEMA OPERATIVO
-# ==========================================
+# OS
 .DS_Store
 Thumbs.db
 
@@ -25,11 +23,5 @@ Thumbs.db
 node_modules/
 npm-debug.log*
 
-
-# Modelos temporales generados durante comparación
-04_ml/models/model_random_forest.pkl
-04_ml/models/model_xgboost.pkl
-
-# Archivos temporales de Python
-__pycache__/
-*.pyc
+# Logs
+*.log

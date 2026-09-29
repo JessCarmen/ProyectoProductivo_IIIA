@@ -1,10 +1,19 @@
-# Documentacion de trabajo
+# Documentacion del proyecto
 
-La documentación del proyecto se organiza alrededor de cuatro bloques:
+La documentación se concentra en esta carpeta para evitar archivos sueltos en la raíz.
 
-1. **Proyecto:** TDR, problema, objetivos y alcance.
-2. **Datos y arquitectura:** Bronze, Silver, Gold, lineage y calidad.
-3. **Modelo:** features, entrenamiento, evaluación, calibración y selección.
-4. **Despliegue/MLOps:** scoring, API, dashboard, monitoreo y reentrenamiento.
+## Documentos principales
 
-La documentación técnica del repositorio debe corresponder al código ejecutable y a las migraciones de `supabase/migrations/`.
+- `data_dictionary.md`: diccionario de datos.
+- `ARCHITECTURE_V2.md`: arquitectura y flujo técnico.
+- `V2_CHANGELOG.md`: cambios principales de la versión 2.
+- `V2_RUNBOOK_Cmder_Windows.md`: guía de ejecución en Windows 11 y Cmder.
+- `ESTRUCTURA_REPOSITORIO.md`: guía rápida para entender el repositorio.
+
+## Referencia histórica
+
+`archive/database_sql_legacy/` contiene únicamente SQL histórico de referencia procedente de versiones anteriores de `02_database/sql/`.
+
+Los SQL históricos **no deben ejecutarse como un pipeline alternativo**. La única fuente oficial y ejecutable de cambios para Supabase es:
+
+`supabase/migrations/`

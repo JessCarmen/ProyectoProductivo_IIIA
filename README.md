@@ -4,57 +4,57 @@
 
 Desarrollar un sistema de **Behavioral Scoring** que utilice seis meses de comportamiento financiero para estimar la probabilidad de incumplimiento del siguiente periodo, clasificar el nivel de riesgo y generar una recomendación preventiva.
 
-## Flujo del proyecto
+## Flujo principal
 
-**XLS/CSV -> Bronze -> Silver -> EDA -> Feature Engineering -> Gold -> gold_ml -> Entrenamiento -> Evaluacion -> model.pkl -> Prediccion -> Nivel de riesgo -> Motor prescriptivo -> score_output -> FastAPI/Docker -> Streamlit/Power BI -> MLOps.**
+**XLS/CSV -> Bronze -> Silver (Maestros y Hechos) -> limpieza y transformación mediante Stored Procedures -> Silver limpio y validado -> EDA -> ingeniería de variables -> Gold -> gold_ml -> entrenamiento y evaluación -> model.pkl -> predicción -> clasificación -> nivel de riesgo -> motor prescriptivo -> score_output -> FastAPI/Docker -> Streamlit/Power BI -> MLOps.**
 
 ## Herramientas
 
-- **Supabase/PostgreSQL:** almacenamiento y pipeline Medallion.
-- **Google Colab / Python:** EDA, feature engineering, entrenamiento y evaluación.
-- **GitHub:** código, SQL, notebooks y documentación.
+- **Supabase/PostgreSQL:** almacenamiento y arquitectura Medallion.
+- **Google Colab / Python:** EDA, análisis, entrenamiento y evaluación durante el desarrollo.
+- **GitHub:** código, scripts, migraciones, documentación y artefactos versionados.
 - **FastAPI:** servicio de scoring.
 - **Docker:** empaquetado y despliegue.
 - **Streamlit:** interfaz operativa.
 - **Power BI:** visualización de cartera.
-- **MLflow:** seguimiento de experimentos/modelos.
+- **MLflow:** seguimiento de experimentos y modelos, pendiente de implementación final.
 
-## Estructura
+## Estructura del repositorio
 
-- `01_data/`: fuente RAW.
-- `02_database/`: SQL de referencia del modelo de datos.
+- `01_data/`: fuente RAW y muestras.
+- `02_database/`: referencia de la arquitectura de base de datos.
 - `03_analysis/`: perfilado, calidad y EDA.
 - `04_ml/`: features, entrenamiento, evaluación, predicción y prescripción.
-- `05_api/`: API FastAPI.
-- `06_dashboard/`: aplicación Streamlit.
-- `07_tests/`: pruebas.
-- `supabase/migrations/`: **fuente oficial de cambios de base de datos**.
+- `05_api/`: FastAPI (pendiente de implementación).
+- `06_dashboard/`: Streamlit (pendiente de implementación).
+- `07_tests/`: pruebas automatizadas (pendientes de implementación).
+- `docs/`: documentación centralizada.
+- `supabase/migrations/`: **fuente oficial de los cambios desplegados en Supabase**.
 
-## Modelo y evaluación
+## SQL y Supabase
 
-La versión 2 corrige la separación de entrenamiento mediante `source_parent_id` para evitar que registros derivados del mismo cliente aparezcan en diferentes particiones. El proceso utiliza aproximadamente 70% train, 15% validation y 15% test, con separación por grupo.
+Los scripts históricos de `02_database/sql/` se conservan solamente en `docs/archive/database_sql_legacy/`. No deben ejecutarse como un segundo pipeline. Para actualizar Supabase se utiliza exclusivamente `supabase/migrations/`.
 
-El test se reserva para la evaluación final. La comparación y el ajuste del umbral se realizan sobre validation.
+## Modelo V2
 
-Métricas: ROC-AUC, PR-AUC (Average Precision), Precision, Recall, F1, matriz de confusión y Brier Score/calibración.
+La versión 2 utiliza `source_parent_id` para mantener juntos los registros originales y sus derivados al realizar la división de datos. Se trabaja aproximadamente con 70% train, 15% validation y 15% test.
+
+La selección del modelo se realiza con validation y el test queda reservado para la evaluación final.
+
+Métricas: ROC-AUC, PR-AUC, Precision, Recall, F1, matriz de confusión y Brier Score/calibración.
 
 ## Scoring
 
-El flujo de inferencia es:
-
-`gold.score_input -> model.pkl -> probabilidad -> prediccion 0/1 -> nivel de riesgo -> recomendacion -> gold.score_output`
-
-## Importante
-
-El `model.pkl` de esta versión debe generarse nuevamente después de aplicar el nuevo esquema de partición. Los resultados del modelo de la versión anterior no deben considerarse resultados finales.
+`gold.score_input -> model.pkl -> probabilidad -> predicción 0/1 -> nivel de riesgo -> recomendación -> gold.score_output`
 
 ## Inicio rápido
 
 1. Configurar `.env` a partir de `.env.example`.
-2. Aplicar las migraciones de Supabase.
-3. Cargar/actualizar Bronze y ejecutar el pipeline hacia Gold.
-4. Ejecutar `04_ml/scripts/04_train.py`.
-5. Ejecutar `04_ml/scripts/05_evaluate.py`.
-6. Cargar casos en `gold.score_input` y ejecutar `10_score_input_to_output.py`.
+2. Vincular el proyecto local con Supabase.
+3. Aplicar las migraciones con `npx supabase db push --include-all`.
+4. Construir y validar Gold/GOLD_ML.
+5. Entrenar el modelo con `04_ml/scripts/04_train.py`.
+6. Evaluar con `04_ml/scripts/05_evaluate.py`.
+7. Probar el flujo `score_input -> score_output`.
 
-Consulta el README de cada carpeta para el detalle.
+Consulta `docs/V2_RUNBOOK_Cmder_Windows.md` para el procedimiento detallado.

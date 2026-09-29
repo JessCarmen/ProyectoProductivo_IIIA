@@ -1,0 +1,35 @@
+{
+  "generated_at_utc": "2026-09-29T06:40:28.262278+00:00",
+  "selection_stage": "validation",
+  "selection_criterion": [
+    "pr_auc",
+    "f1_default",
+    "roc_auc"
+  ],
+  "results": [
+    {
+      "model": "Random Forest",
+      "validation_threshold": 0.23,
+      "accuracy": 0.74730323611666,
+      "precision_default": 0.5700712589073634,
+      "recall_default": 0.6395736175882745,
+      "f1_default": 0.6028257456828885,
+      "roc_auc": 0.7846865760439307,
+      "pr_auc": 0.6499551251427906,
+      "brier_score": 0.16268579223466248
+    },
+    {
+      "model": "XGBoost",
+      "validation_threshold": 0.38,
+      "accuracy": 0.7772672792648821,
+      "precision_default": 0.6314713896457765,
+      "recall_default": 0.6175882744836776,
+      "f1_default": 0.624452677669249,
+      "roc_auc": 0.7990669083188477,
+      "pr_auc": 0.685632345564945,
+      "brier_score": 0.15261323001537422
+    }
+  ],
+  "selected_model": "XGBoost",
+  "selected_threshold": 0.38
+}

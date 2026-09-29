@@ -1,0 +1,24 @@
+{
+  "accuracy": 0.7704295704295704,
+  "precision_default": 0.6184387617765814,
+  "recall_default": 0.6122584943371085,
+  "f1_default": 0.6153331101439572,
+  "roc_auc": 0.7998912064711805,
+  "pr_auc": 0.6915348642085702,
+  "brier_score": 0.1525874666313061,
+  "test_records": 5005,
+  "risk_threshold": 0.38,
+  "model_version": "v20260929_064028",
+  "validation_selection": {
+    "model": "XGBoost",
+    "validation_threshold": 0.38,
+    "accuracy": 0.7772672792648821,
+    "precision_default": 0.6314713896457765,
+    "recall_default": 0.6175882744836776,
+    "f1_default": 0.624452677669249,
+    "roc_auc": 0.7990669083188477,
+    "pr_auc": 0.685632345564945,
+    "brier_score": 0.15261323001537422
+  },
+  "test_group_purity": true
+}
