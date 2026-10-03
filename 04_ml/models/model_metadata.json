@@ -101,6 +101,6 @@
     "pr_auc": 0.6915348642085702,
     "brier_score": 0.1525874666313061
   },
-  "artifact": "D:\\ICONTINENTAL\\ProyectoProductivo_IIIA_V2\\04_ml\\models\\model.pkl",
-  "manifest": "D:\\ICONTINENTAL\\ProyectoProductivo_IIIA_V2\\04_ml\\models\\split_manifest.csv"
+  "artifact": "04_ml/models/model.pkl",
+  "manifest": "04_ml/models/split_manifest.csv"
 }

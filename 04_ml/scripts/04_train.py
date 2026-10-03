@@ -157,7 +157,7 @@ def main():
     comparison_payload = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "selection_stage": "validation",
-        "selection_criterion": ["pr_auc", "f1_default", "roc_auc"],
+        "selection_criterion": ["roc_auc", "pr_auc", "f1_default"],
         "results": results,
         "selected_model": selected_name,
         "selected_threshold": selected_threshold,
@@ -186,8 +186,8 @@ def main():
         "risk_threshold": selected_threshold,
         "selection_metrics_validation": selected,
         "final_test_metrics": final_metrics,
-        "artifact": str(MODEL_PATH),
-        "manifest": str(MANIFEST_PATH),
+        "artifact": "04_ml/models/model.pkl",
+        "manifest": "04_ml/models/split_manifest.csv",
     }
     json_dump(METADATA_PATH, metadata)
     json_dump(MODELS_DIR / "evaluation_metrics.json", {**final_metrics, "test_records": int(len(y_test)), "risk_threshold": selected_threshold})
