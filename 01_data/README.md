@@ -1,10 +1,29 @@
-# 01_data - Datos
+# 02_database - Referencia de base de datos
 
-Contiene la fuente RAW utilizada por el proyecto.
+Esta carpeta documenta la arquitectura lógica de datos del proyecto.
 
-- `raw/credit_card_clients_raw.csv`: dataset base de 33,377 registros.
-- `samples/`: muestras opcionales para pruebas locales.
+## Fuente oficial de Supabase
 
-La data RAW no debe limpiarse ni modificarse dentro de esta carpeta. La limpieza se realiza en Silver mediante los Stored Procedures de Supabase.
+La fuente oficial y ejecutable de los cambios de base de datos es:
 
-Antes de cargar Bronze, verificar si la tabla ya contiene el lote. El loader actual trabaja por insercion de lote y no debe ejecutarse repetidamente sobre la misma fuente sin un control de lote.
+`supabase/migrations/`
+
+Las migraciones son las que se aplican mediante:
+
+```bash
+npx supabase db push --include-all
+```
+
+## Arquitectura
+
+`Bronze -> Silver Maestros/Hechos -> Gold`
+
+Los Stored Procedures de limpieza y transformación se implementan dentro de las migraciones de Supabase y dejan Silver preparado para el análisis posterior.
+
+## SQL históricos
+
+Los antiguos scripts de `02_database/sql/` se conservaron únicamente como referencia histórica en:
+
+`docs/archive/database_sql_legacy/`
+
+No deben ejecutarse como un segundo pipeline ni considerarse una fuente alternativa al historial de `supabase/migrations/`.

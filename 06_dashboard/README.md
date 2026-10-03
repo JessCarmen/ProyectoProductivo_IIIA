@@ -1,12 +1,27 @@
 # 06_dashboard - Streamlit
 
-Interfaz para el consultor. Debe mostrar únicamente información de negocio:
+Interfaz operativa para consulta de la cartera puntuada.
 
-- cliente;
-- probabilidad de incumplimiento;
-- nivel de riesgo;
-- señales de comportamiento;
-- recomendación;
-- prioridad de gestión.
+## Fuente
 
-Los detalles técnicos del modelo se mantienen en la vista del científico de datos, no en la interfaz del consultor.
+Streamlit no recalcula la PD. Consume FastAPI, que a su vez consulta `gold.vw_portfolio_scoring_current` o ejecuta el modelo real cuando se solicita scoring.
+
+## Contenido actual
+
+- total de cartera;
+- PD promedio;
+- cantidad de predicciones positivas;
+- clientes en riesgo Alto y Critico;
+- semaforo por nivel de riesgo;
+- consulta individual por cliente;
+- principales senales de comportamiento;
+- recomendacion prescriptiva;
+- tabla operativa con filtro de riesgo.
+
+## Ejecucion
+
+```bash
+streamlit run 06_dashboard/app.py
+```
+
+Por defecto consume FastAPI en `http://localhost:8000`. En Docker Compose utiliza `API_BASE_URL=http://api:8000`.
