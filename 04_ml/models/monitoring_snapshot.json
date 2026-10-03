@@ -1,0 +1,18 @@
+{
+  "created_at_utc": "2026-10-03T22:14:30.834271+00:00",
+  "records": 33377,
+  "pd_min": 0.001919,
+  "pd_mean": 0.3841617924019534,
+  "pd_max": 1.0,
+  "prediction_counts": {
+    "0": 21073,
+    "1": 12304
+  },
+  "risk_counts": {
+    "BAJO": 15043,
+    "CRITICO": 8553,
+    "MEDIO": 6328,
+    "ALTO": 3453
+  },
+  "note": "Baseline operativo. Comparar snapshots futuros para prediction drift; no afirmar data drift sin datos de periodos futuros."
+}

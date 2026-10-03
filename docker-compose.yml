@@ -1,0 +1,19 @@
+name: proyecto-productivo-iiia
+
+services:
+  api:
+    build: .
+    env_file: .env
+    command: uvicorn 05_api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+  dashboard:
+    build: .
+    env_file: .env
+    environment:
+      API_BASE_URL: http://api:8000
+    command: streamlit run 06_dashboard/app.py --server.address=0.0.0.0 --server.port=8501
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
