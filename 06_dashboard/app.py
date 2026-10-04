@@ -144,7 +144,7 @@ st.markdown(
     .kpi {{
         background: {PANEL};
         border: 1px solid {BORDER};
-        border-top: 2px solid {accent};
+        border-top: 2px solid #19C3C8;
         border-radius: 13px;
         padding: 15px 16px;
         min-height: 104px;
@@ -266,7 +266,7 @@ st.markdown(
         border-color: {BORDER};
     }}
     </style>
-    """.replace("{accent}", CYAN),
+    """,
     unsafe_allow_html=True,
 )
 
