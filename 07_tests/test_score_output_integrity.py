@@ -1,36 +1,84 @@
 import os
 
 import pytest
-from sqlalchemy import create_engine, text
+import requests
+
+
+API_BASE_URL = os.getenv(
+    "API_BASE_URL",
+    "https://pproyecto-productivo-iiia-api.onrender.com",
+).rstrip("/")
 
 
 @pytest.mark.integration
 def test_score_output_integrity():
-    database_url = os.getenv("DATABASE_URL")
-    if not database_url:
-        pytest.skip("DATABASE_URL no configurada; se omite prueba de integracion con Supabase")
 
-    engine = create_engine(database_url, pool_pre_ping=True)
-    query = text("""
-        SELECT
-            COUNT(*)::int AS total,
-            COUNT(DISTINCT id)::int AS ids_unicos,
-            COUNT(*) FILTER (WHERE probability_default IS NULL)::int AS pd_nulos,
-            COUNT(*) FILTER (WHERE prediction IS NULL)::int AS prediction_nulos,
-            COUNT(*) FILTER (WHERE risk_level IS NULL)::int AS risk_nulos,
-            COUNT(*) FILTER (WHERE recommendation IS NULL)::int AS recommendation_nulos
-        FROM gold.score_output
-    """)
+    response = requests.get(
+        f"{API_BASE_URL}/portfolio/summary",
+        timeout=90,
+    )
 
-    try:
-        with engine.connect() as conn:
-            row = conn.execute(query).mappings().one()
-    finally:
-        engine.dispose()
+    assert response.status_code == 200
 
-    assert row["total"] == 33377
-    assert row["ids_unicos"] == 33377
-    assert row["pd_nulos"] == 0
-    assert row["prediction_nulos"] == 0
-    assert row["risk_nulos"] == 0
-    assert row["recommendation_nulos"] == 0
+    data = response.json()
+
+    # --------------------------------------------------------
+    # Cantidad de cartera
+    # --------------------------------------------------------
+
+    assert data["total"] == 33377
+
+    # --------------------------------------------------------
+    # Clasificacion binaria
+    # --------------------------------------------------------
+
+    assert data["prediction_0"] == 21073
+    assert data["prediction_1"] == 12304
+
+    assert (
+        data["prediction_0"]
+        + data["prediction_1"]
+        == data["total"]
+    )
+
+    # --------------------------------------------------------
+    # Niveles de riesgo
+    # --------------------------------------------------------
+
+    assert data["bajo"] == 15043
+    assert data["medio"] == 6328
+    assert data["alto"] == 3453
+    assert data["critico"] == 8553
+
+    assert (
+        data["bajo"]
+        + data["medio"]
+        + data["alto"]
+        + data["critico"]
+        == data["total"]
+    )
+
+    # --------------------------------------------------------
+    # Probabilidades
+    # --------------------------------------------------------
+
+    assert 0 <= float(data["pd_min"]) <= 1
+    assert 0 <= float(data["pd_promedio"]) <= 1
+    assert 0 <= float(data["pd_max"]) <= 1
+
+    assert round(
+        float(data["pd_promedio"]),
+        6,
+    ) == round(
+        0.3841617924019534,
+        6,
+    )
+
+    # --------------------------------------------------------
+    # Version
+    # --------------------------------------------------------
+
+    assert (
+        data["model_version"]
+        == "v20260929_064028"
+    )

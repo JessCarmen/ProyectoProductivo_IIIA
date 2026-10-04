@@ -1,27 +1,34 @@
 # 06_dashboard - Streamlit
 
-Interfaz operativa para consulta de la cartera puntuada.
+Dashboard operativo para supervisión de la cartera puntuada.
 
 ## Fuente
 
-Streamlit no recalcula la PD. Consume FastAPI, que a su vez consulta `gold.vw_portfolio_scoring_current` o ejecuta el modelo real cuando se solicita scoring.
+Streamlit no recalcula la PD. Consume FastAPI, que consulta `gold.vw_portfolio_scoring_current`.
 
-## Contenido actual
+## Vista actual
 
-- total de cartera;
+La interfaz está orientada a un supervisor de créditos e incluye:
+
+- resumen ejecutivo de cartera;
 - PD promedio;
-- cantidad de predicciones positivas;
-- clientes en riesgo Alto y Critico;
-- semaforo por nivel de riesgo;
-- consulta individual por cliente;
-- principales senales de comportamiento;
-- recomendacion prescriptiva;
-- tabla operativa con filtro de riesgo.
+- cartera Alto + Crítico como cola prioritaria;
+- distribución por nivel de riesgo;
+- priorización de clientes por PD;
+- consulta Cliente 360;
+- señales de atraso y recomendación prescriptiva;
+- filtros de cartera por riesgo y clasificación;
+- exportación CSV;
+- ficha técnica del modelo con métricas del test reservado.
 
-## Ejecucion
+## Identidad visual
+
+Se usa la marca académica ficticia **NexaRisk**. No representa una institución financiera real.
+
+## Ejecución
 
 ```bash
 streamlit run 06_dashboard/app.py
 ```
 
-Por defecto consume FastAPI en `http://localhost:8000`. En Docker Compose utiliza `API_BASE_URL=http://api:8000`.
+Por defecto consume FastAPI en `http://127.0.0.1:8000`. En Streamlit Community Cloud se configura `API_BASE_URL` como secret.
