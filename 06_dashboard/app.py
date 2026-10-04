@@ -1,15 +1,13 @@
 import os
 import time
-import textwrap
 from typing import Any
 
 import pandas as pd
 import requests
 import streamlit as st
 
-
 # ============================================================
-# CONFIGURACION
+# CONFIGURACION GENERAL
 # ============================================================
 
 st.set_page_config(
@@ -19,236 +17,87 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-
 # ============================================================
-# IDENTIDAD VISUAL
+# ESTILO VISUAL SIN HTML VISIBLE
 # ============================================================
 
-NAVY = "#0B1F33"
-NAVY_2 = "#153A59"
-TEAL = "#0E7490"
-MINT = "#14B8A6"
-GOLD = "#F4B942"
-
-CLOUD = "#F5F8FB"
-WHITE = "#FFFFFF"
-INK = "#172033"
-MUTED = "#667085"
-BORDER = "#DFE7EE"
-
-GREEN = "#2E8B57"
-AMBER = "#D4A017"
-ORANGE = "#E67E22"
-RED = "#C62828"
-
-
-def html(content: str):
+st.markdown(
     """
-    Render HTML without Markdown interpreting indentation
-    as a code block.
-    """
-    st.markdown(
-        textwrap.dedent(content).strip(),
-        unsafe_allow_html=True,
-    )
-
-
-# ============================================================
-# CSS
-# ============================================================
-
-html(
-    f"""
     <style>
-    .stApp {{
-        background: {CLOUD};
-    }}
-
-    .block-container {{
-        max-width: 1650px;
+    .stApp {
+        background: #F4F7FA;
+    }
+    .block-container {
+        max-width: 1720px;
         padding-top: 1rem;
         padding-bottom: 2rem;
-    }}
-
-    [data-testid="stHeader"] {{
-        background: transparent;
-    }}
-
-    /* ---------- HEADER ---------- */
-
-    .nexa-header {{
-        background: linear-gradient(
-            120deg,
-            {NAVY} 0%,
-            {NAVY_2} 65%,
-            {TEAL} 100%
-        );
+    }
+    [data-testid="stHeader"] {
+        background: rgba(244,247,250,0.92);
+    }
+    div[data-testid="stMetric"] {
+        background: #FFFFFF;
+        border: 1px solid #DDE6EE;
         border-radius: 16px;
-        padding: 22px 26px;
-        margin-bottom: 16px;
-        box-shadow: 0 8px 24px rgba(11,31,51,.12);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }}
-
-    .nexa-brand {{
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }}
-
-    .nexa-logo {{
-        width: 58px;
-        height: 58px;
-        border-radius: 13px;
-        background: linear-gradient(135deg, {MINT}, {TEAL});
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 23px;
-        font-weight: 850;
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,.20);
-    }}
-
-    .nexa-name {{
-        color: white;
-        font-size: 27px;
-        line-height: 1.05;
-        font-weight: 800;
-    }}
-
-    .nexa-subtitle {{
-        margin-top: 5px;
-        color: rgba(255,255,255,.75);
-        font-size: 13px;
-    }}
-
-    .nexa-status {{
-        color: white;
-        background: rgba(255,255,255,.10);
-        border: 1px solid rgba(255,255,255,.20);
-        padding: 9px 13px;
-        border-radius: 10px;
-        font-size: 12px;
-    }}
-
-    .online {{
-        color: #58E6A7;
-        font-weight: 800;
-    }}
-
-    /* ---------- KPI ---------- */
-
-    .kpi-card {{
-        background: white;
-        border: 1px solid {BORDER};
-        border-radius: 13px;
-        padding: 17px 18px;
-        min-height: 112px;
-        box-shadow: 0 3px 12px rgba(16,24,40,.04);
-    }}
-
-    .kpi-label {{
-        font-size: 11px;
-        color: {MUTED};
-        font-weight: 750;
-        letter-spacing: .55px;
+        padding: 16px 18px;
+        box-shadow: 0 4px 18px rgba(11,31,51,0.05);
+    }
+    div[data-testid="stMetric"] label {
+        color: #667085 !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
         text-transform: uppercase;
-    }}
-
-    .kpi-value {{
-        margin-top: 5px;
-        color: {INK};
-        font-size: 29px;
+        letter-spacing: 0.04em;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #102033;
         font-weight: 800;
-    }}
-
-    .kpi-note {{
-        margin-top: 3px;
-        color: {MUTED};
-        font-size: 11px;
-    }}
-
-    .accent-red {{
-        border-left: 5px solid {RED};
-    }}
-
-    .accent-teal {{
-        border-left: 5px solid {MINT};
-    }}
-
-    /* ---------- TITULOS ---------- */
-
-    .section-title {{
-        color: {INK};
-        font-size: 16px;
+    }
+    div[data-testid="stDataFrame"] {
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid #DDE6EE;
+    }
+    .stButton > button {
+        border-radius: 10px;
         font-weight: 800;
-        margin-bottom: 1px;
-    }}
-
-    .section-caption {{
-        color: {MUTED};
-        font-size: 11px;
-        margin-bottom: 9px;
-    }}
-
-    /* ---------- PANEL FILTROS ---------- */
-
-    .filter-head {{
-        background: {NAVY};
+        background: #0E7490;
         color: white;
-        padding: 12px 14px;
+        border: 0;
+    }
+    .stDownloadButton > button {
         border-radius: 10px;
         font-weight: 800;
-        margin-bottom: 10px;
-    }}
-
-    /* ---------- ALERTA ---------- */
-
-    .exec-alert {{
-        margin-top: 8px;
-        background: #FFF7F5;
-        border: 1px solid #F7D6CF;
-        border-left: 5px solid {RED};
-        border-radius: 10px;
-        padding: 13px 15px;
-        color: {INK};
-        font-size: 12px;
-    }}
-
-    /* ---------- STREAMLIT METRICS ---------- */
-
-    [data-testid="stMetric"] {{
-        background: white;
-        border: 1px solid {BORDER};
-        padding: 14px;
-        border-radius: 12px;
-    }}
-
-    /* ---------- TABLA ---------- */
-
-    [data-testid="stDataFrame"] {{
-        background: white;
-        border-radius: 10px;
-    }}
-
-    /* ---------- BOTON ---------- */
-
-    .stButton > button {{
-        border-radius: 8px;
-        font-weight: 700;
-    }}
-
+        border: 1px solid #0E7490;
+        color: #0E7490;
+    }
+    section[data-testid="stSidebar"] {
+        display: none;
+    }
     </style>
-    """
+    """,
+    unsafe_allow_html=True,
 )
 
+# ============================================================
+# CONSTANTES
+# ============================================================
+
+API_DEFAULT = "https://pproyecto-productivo-iiia-api.onrender.com"
+REQUEST_TIMEOUT = 90
+
+RISK_ORDER = ["CRITICO", "ALTO", "MEDIO", "BAJO"]
+RISK_COLORS = {
+    "BAJO": "🟢",
+    "MEDIO": "🟡",
+    "ALTO": "🟠",
+    "CRITICO": "🔴",
+}
 
 # ============================================================
-# API
+# CONEXION API
 # ============================================================
+
 
 def get_api_base_url() -> str:
     try:
@@ -257,824 +106,380 @@ def get_api_base_url() -> str:
     except Exception:
         pass
 
-    return os.getenv(
-        "API_BASE_URL",
-        "http://127.0.0.1:8000",
-    ).rstrip("/")
+    return os.getenv("API_BASE_URL", API_DEFAULT).rstrip("/")
 
 
 API_BASE_URL = get_api_base_url()
-REQUEST_TIMEOUT = 90
 
 
-def api_get(
-    endpoint: str,
-    params: dict | None = None,
-    retries: int = 2,
-) -> Any:
-
+def api_get(endpoint: str, params: dict | None = None, retries: int = 2) -> Any:
     url = f"{API_BASE_URL}{endpoint}"
     last_error = None
 
     for attempt in range(retries + 1):
         try:
-            response = requests.get(
-                url,
-                params=params,
-                timeout=REQUEST_TIMEOUT,
-            )
-
+            response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
             return response.json()
-
         except requests.RequestException as exc:
             last_error = exc
-
             if attempt < retries:
                 time.sleep(3)
 
-    raise RuntimeError(
-        f"No fue posible conectar con FastAPI: {last_error}"
-    )
+    raise RuntimeError(f"No fue posible conectar con FastAPI: {last_error}")
 
 
 @st.cache_data(ttl=60)
-def load_summary():
+def load_summary() -> dict:
     return api_get("/portfolio/summary")
 
 
 @st.cache_data(ttl=60)
-def load_portfolio(
-    risk_level: str | None = None,
-    limit: int = 250,
-):
+def load_portfolio(risk_level: str | None = None, limit: int = 250) -> Any:
     params = {"limit": limit}
-
     if risk_level and risk_level != "TODOS":
         params["risk_level"] = risk_level
-
-    return api_get(
-        "/portfolio",
-        params=params,
-    )
+    return api_get("/portfolio", params=params)
 
 
-def load_customer(customer_id: int):
-    return api_get(
-        f"/portfolio/{customer_id}"
-    )
-
+@st.cache_data(ttl=60)
+def load_customer(customer_id: int) -> dict:
+    return api_get(f"/portfolio/{customer_id}")
 
 # ============================================================
 # HELPERS
 # ============================================================
 
-def extract_records(payload: Any) -> list:
+
+def extract_records(payload: Any) -> list[dict]:
     if isinstance(payload, list):
-        return payload
+        return [x for x in payload if isinstance(x, dict)]
 
     if isinstance(payload, dict):
-        for key in [
-            "items",
-            "data",
-            "results",
-            "portfolio",
-            "records",
-        ]:
+        for key in ["items", "data", "results", "portfolio", "records"]:
             value = payload.get(key)
-
             if isinstance(value, list):
-                return value
+                return [x for x in value if isinstance(x, dict)]
+        if "id" in payload:
+            return [payload]
 
     return []
 
 
-def normalize_df(payload: Any) -> pd.DataFrame:
+def to_df(payload: Any) -> pd.DataFrame:
     records = extract_records(payload)
-
     if not records:
         return pd.DataFrame()
 
     df = pd.DataFrame(records)
 
-    numeric_columns = [
+    numeric_cols = [
         "id",
         "probability_default",
         "prediction",
         "limit_bal",
         "age",
+        "pay_0",
         "pay_max_delay",
         "recent_delay_months",
         "consecutive_delay_months",
+        "bill_avg",
+        "pay_amt_avg",
         "payment_bill_ratio_total",
     ]
 
-    for col in numeric_columns:
+    for col in numeric_cols:
         if col in df.columns:
-            df[col] = pd.to_numeric(
-                df[col],
-                errors="coerce",
-            )
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
     return df
 
 
-def fmt_int(value):
+def fmt_int(value: Any) -> str:
     try:
-        return f"{int(value):,}".replace(",", ".")
+        return f"{int(float(value)):,}".replace(",", ".")
     except Exception:
         return "N/D"
 
 
-def fmt_pct(value):
+def fmt_pct(value: Any) -> str:
     try:
         return f"{float(value) * 100:.2f}%"
     except Exception:
         return "N/D"
 
 
-def fmt_num(value):
+def fmt_money(value: Any) -> str:
     try:
         return f"{float(value):,.0f}".replace(",", ".")
     except Exception:
         return "N/D"
 
 
+def risk_badge(value: Any) -> str:
+    value = str(value or "N/D").upper()
+    return f"{RISK_COLORS.get(value, '⚪')} {value}"
+
+
+def add_section_title(title: str, caption: str | None = None):
+    st.markdown(f"### {title}")
+    if caption:
+        st.caption(caption)
+
 # ============================================================
-# CARGA INICIAL
+# CARGA DE DATOS
 # ============================================================
 
 try:
     summary = load_summary()
-
 except Exception as exc:
-    st.error(
-        "No fue posible conectar con FastAPI."
-    )
-
-    st.info(
-        "El servicio gratuito de Render puede tardar "
-        "algunos segundos en despertar."
-    )
-
+    st.error("No fue posible conectar con la API pública.")
+    st.info("Render Free puede tardar hasta 60 segundos en despertar después de inactividad.")
+    st.code(API_BASE_URL)
     with st.expander("Detalle técnico"):
         st.exception(exc)
-
     st.stop()
 
+# ============================================================
+# HEADER INSTITUCIONAL
+# ============================================================
+
+header_left, header_right = st.columns([4, 1.3], vertical_alignment="center")
+
+with header_left:
+    st.markdown("# 🛡️ NexaRisk")
+    st.markdown("#### Centro de Supervisión de Riesgo Crediticio")
+    st.caption("Vista ejecutiva de cartera puntuada · Scoring real persistido en Gold · FastAPI + Supabase + Streamlit")
+
+with header_right:
+    st.success("● API ONLINE")
+    st.caption(f"Modelo: {summary.get('model_version', 'N/D')}")
+    st.caption("Paleta: Navy · Teal · Mint · Gold")
+
+st.divider()
 
 # ============================================================
-# HEADER
-# ============================================================
-
-html(
-    f"""
-    <div class="nexa-header">
-        <div class="nexa-brand">
-            <div class="nexa-logo">NR</div>
-
-            <div>
-                <div class="nexa-name">
-                    NexaRisk
-                </div>
-
-                <div class="nexa-subtitle">
-                    Centro de Supervisión de Riesgo Crediticio
-                </div>
-            </div>
-        </div>
-
-        <div class="nexa-status">
-            <span class="online">● API ONLINE</span>
-            &nbsp;&nbsp;|&nbsp;&nbsp;
-            Modelo {summary.get("model_version", "N/D")}
-        </div>
-    </div>
-    """
-)
-
-
-# ============================================================
-# CALCULOS
+# KPIS EJECUTIVOS
 # ============================================================
 
 total = int(summary.get("total", 0))
-bajo = int(summary.get("bajo", 0))
-medio = int(summary.get("medio", 0))
-alto = int(summary.get("alto", 0))
 critico = int(summary.get("critico", 0))
+alto = int(summary.get("alto", 0))
+medio = int(summary.get("medio", 0))
+bajo = int(summary.get("bajo", 0))
+pred_1 = int(summary.get("prediction_1", 0))
+pred_0 = int(summary.get("prediction_0", 0))
+priority = critico + alto
+priority_pct = priority / total if total else 0
 
-priority = alto + critico
+k1, k2, k3, k4, k5 = st.columns(5)
 
-priority_pct = (
-    priority / total
-    if total
-    else 0
-)
-
-
-# ============================================================
-# KPIs
-# ============================================================
-
-k1, k2, k3, k4 = st.columns(4)
-
-
-with k1:
-    html(
-        f"""
-        <div class="kpi-card accent-teal">
-            <div class="kpi-label">Cartera evaluada</div>
-            <div class="kpi-value">{fmt_int(total)}</div>
-            <div class="kpi-note">
-                Clientes con scoring vigente
-            </div>
-        </div>
-        """
-    )
-
-
-with k2:
-    html(
-        f"""
-        <div class="kpi-card">
-            <div class="kpi-label">PD promedio</div>
-            <div class="kpi-value">
-                {fmt_pct(summary.get("pd_promedio"))}
-            </div>
-            <div class="kpi-note">
-                Probabilidad media de incumplimiento
-            </div>
-        </div>
-        """
-    )
-
-
-with k3:
-    html(
-        f"""
-        <div class="kpi-card accent-red">
-            <div class="kpi-label">
-                Gestión prioritaria
-            </div>
-
-            <div class="kpi-value">
-                {fmt_int(priority)}
-            </div>
-
-            <div class="kpi-note">
-                {fmt_pct(priority_pct)}
-                de la cartera en Alto + Crítico
-            </div>
-        </div>
-        """
-    )
-
-
-with k4:
-    html(
-        f"""
-        <div class="kpi-card">
-            <div class="kpi-label">
-                Predicción positiva
-            </div>
-
-            <div class="kpi-value">
-                {fmt_int(summary.get("prediction_1"))}
-            </div>
-
-            <div class="kpi-note">
-                Clientes clasificados como potencial incumplimiento
-            </div>
-        </div>
-        """
-    )
-
-
-st.write("")
-
+k1.metric("Cartera evaluada", fmt_int(total), "registros")
+k2.metric("PD promedio", fmt_pct(summary.get("pd_promedio")), "probabilidad media")
+k3.metric("Gestión prioritaria", fmt_int(priority), f"{fmt_pct(priority_pct)} alto + crítico")
+k4.metric("Predicción = 1", fmt_int(pred_1), "potencial incumplimiento")
+k5.metric("Predicción = 0", fmt_int(pred_0), "sin señal de incumplimiento")
 
 # ============================================================
-# LAYOUT: DASHBOARD + FILTROS DERECHA
+# LAYOUT CON FILTROS A LA DERECHA
 # ============================================================
 
-main_col, right_col = st.columns(
-    [5, 1.35],
-    gap="large",
-)
+main_col, filter_col = st.columns([4.8, 1.25], gap="large")
 
+with filter_col:
+    with st.container(border=True):
+        st.markdown("### 🎛️ Filtros")
+        risk_filter = st.selectbox("Nivel de riesgo", ["TODOS", "CRITICO", "ALTO", "MEDIO", "BAJO"])
+        prediction_filter = st.selectbox("Clasificación", ["TODAS", "1", "0"])
+        min_pd = st.slider("PD mínima", min_value=0, max_value=100, value=0, step=5)
+        row_limit = st.selectbox("Clientes a mostrar", [50, 100, 250, 500, 1000], index=2)
+        st.caption("Los filtros se aplican sobre la cartera consultada desde FastAPI.")
 
-# ============================================================
-# PANEL DERECHO
-# ============================================================
+    with st.container(border=True):
+        st.markdown("### 🔎 Cliente 360")
+        quick_customer = st.number_input("ID cliente", min_value=1, value=1, step=1)
+        quick_search = st.button("Consultar cliente", type="primary", use_container_width=True)
 
-with right_col:
-
-    html(
-        """
-        <div class="filter-head">
-            Filtros de cartera
-        </div>
-        """
-    )
-
-    risk_filter = st.selectbox(
-        "Nivel de riesgo",
-        [
-            "TODOS",
-            "CRITICO",
-            "ALTO",
-            "MEDIO",
-            "BAJO",
-        ],
-    )
-
-    prediction_filter = st.selectbox(
-        "Clasificación",
-        [
-            "TODAS",
-            "1",
-            "0",
-        ],
-    )
-
-    min_pd = st.slider(
-        "PD mínima",
-        min_value=0,
-        max_value=100,
-        value=0,
-        step=5,
-    )
-
-    row_limit = st.selectbox(
-        "Registros",
-        [
-            50,
-            100,
-            250,
-            500,
-            1000,
-        ],
-        index=2,
-    )
-
-    st.divider()
-
-    html(
-        """
-        <div class="section-title">
-            Consulta rápida
-        </div>
-        """
-    )
-
-    customer_id = st.number_input(
-        "ID cliente",
-        min_value=1,
-        step=1,
-        value=1,
-    )
-
-    search_customer = st.button(
-        "Consultar cliente",
-        type="primary",
-        use_container_width=True,
-    )
-
-
-# ============================================================
-# CONTENIDO PRINCIPAL
-# ============================================================
+    with st.container(border=True):
+        st.markdown("### 🎨 Identidad")
+        st.caption("NexaRisk · Supervisión de cartera")
+        st.caption("#0B1F33 · #0E7490 · #14B8A6 · #F4B942")
 
 with main_col:
-
     # --------------------------------------------------------
-    # FILA DE GRAFICOS
+    # GRAFICOS PRINCIPALES
     # --------------------------------------------------------
+    graph_left, graph_right = st.columns([1.25, 1], gap="medium")
 
-    g1, g2 = st.columns(
-        [1.25, 1],
-        gap="medium",
-    )
+    with graph_left:
+        with st.container(border=True):
+            add_section_title("Distribución de riesgo", "Composición de la cartera por banda de supervisión")
+            risk_df = pd.DataFrame(
+                {
+                    "Nivel": ["BAJO", "MEDIO", "ALTO", "CRITICO"],
+                    "Clientes": [bajo, medio, alto, critico],
+                }
+            )
+            risk_df["% cartera"] = risk_df["Clientes"] / max(total, 1) * 100
+            st.bar_chart(risk_df.set_index("Nivel")[["Clientes"]], height=300)
+            st.dataframe(
+                risk_df,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Clientes": st.column_config.NumberColumn("Clientes", format="%d"),
+                    "% cartera": st.column_config.NumberColumn("% cartera", format="%.2f%%"),
+                },
+            )
 
+    with graph_right:
+        with st.container(border=True):
+            add_section_title("Clasificación del modelo", "Salida binaria del scoring")
+            pred_df = pd.DataFrame(
+                {
+                    "Clase": ["Predicción 0", "Predicción 1"],
+                    "Clientes": [pred_0, pred_1],
+                }
+            )
+            st.bar_chart(pred_df.set_index("Clase"), height=300)
 
-    with g1:
-
-        html(
-            """
-            <div class="section-title">
-                Distribución de riesgo
-            </div>
-            <div class="section-caption">
-                Clientes por banda de riesgo
-            </div>
-            """
-        )
-
-        risk_df = pd.DataFrame(
-            {
-                "Nivel": [
-                    "BAJO",
-                    "MEDIO",
-                    "ALTO",
-                    "CRITICO",
-                ],
-                "Clientes": [
-                    bajo,
-                    medio,
-                    alto,
-                    critico,
-                ],
-            }
-        )
-
-        st.bar_chart(
-            risk_df.set_index("Nivel"),
-            height=310,
-        )
-
-
-    with g2:
-
-        html(
-            """
-            <div class="section-title">
-                Clasificación del modelo
-            </div>
-            <div class="section-caption">
-                Distribución de predicción binaria
-            </div>
-            """
-        )
-
-        prediction_df = pd.DataFrame(
-            {
-                "Clase": [
-                    "Predicción 0",
-                    "Predicción 1",
-                ],
-                "Clientes": [
-                    int(
-                        summary.get(
-                            "prediction_0",
-                            0,
-                        )
-                    ),
-                    int(
-                        summary.get(
-                            "prediction_1",
-                            0,
-                        )
-                    ),
-                ],
-            }
-        )
-
-        st.bar_chart(
-            prediction_df.set_index("Clase"),
-            height=310,
-        )
-
+            st.metric("PD mínima", fmt_pct(summary.get("pd_min")))
+            st.metric("PD máxima", fmt_pct(summary.get("pd_max")))
 
     # --------------------------------------------------------
     # LECTURA EJECUTIVA
     # --------------------------------------------------------
-
-    html(
-        f"""
-        <div class="exec-alert">
-            <b>Lectura ejecutiva:</b>
-            actualmente
-            <b>{fmt_int(priority)}</b>
-            clientes están clasificados en niveles
-            <b>ALTO o CRÍTICO</b>,
-            equivalentes al
-            <b>{fmt_pct(priority_pct)}</b>
-            de la cartera evaluada.
-
-            Esta población constituye la principal
-            cola de seguimiento preventivo.
-        </div>
-        """
-    )
-
-
-    st.write("")
-
-
-    # --------------------------------------------------------
-    # TABLA
-    # --------------------------------------------------------
-
-    html(
-        """
-        <div class="section-title">
-            Cartera priorizada
-        </div>
-
-        <div class="section-caption">
-            Ordenada por mayor probabilidad de incumplimiento
-        </div>
-        """
-    )
-
-
-    try:
-        payload = load_portfolio(
-            risk_level=risk_filter,
-            limit=row_limit,
+    with st.container(border=True):
+        st.markdown("### 🚨 Lectura ejecutiva")
+        st.warning(
+            f"Actualmente **{fmt_int(priority)} clientes** están en niveles **ALTO o CRÍTICO**, "
+            f"equivalentes al **{fmt_pct(priority_pct)}** de la cartera evaluada. "
+            "Esta población constituye la principal cola de seguimiento preventivo para el supervisor de créditos."
         )
 
-        df = normalize_df(payload)
+    # --------------------------------------------------------
+    # CARTERA PRIORIZADA
+    # --------------------------------------------------------
+    with st.container(border=True):
+        add_section_title("Cartera priorizada", "Ordenada por mayor probabilidad de incumplimiento")
 
+        try:
+            portfolio_payload = load_portfolio(risk_level=risk_filter, limit=row_limit)
+            df = to_df(portfolio_payload)
 
-        if df.empty:
-            st.warning(
-                "No existen registros para los filtros seleccionados."
-            )
+            if df.empty:
+                st.warning("No existen registros para los filtros seleccionados.")
+            else:
+                if prediction_filter != "TODAS" and "prediction" in df.columns:
+                    df = df[df["prediction"] == int(prediction_filter)]
 
-        else:
+                if "probability_default" in df.columns:
+                    df = df[df["probability_default"] >= min_pd / 100]
+                    df = df.sort_values("probability_default", ascending=False)
+                    df["pd_percent"] = df["probability_default"] * 100
 
-            # -------------------------
-            # FILTRO PREDICCION
-            # -------------------------
+                if "risk_level" in df.columns:
+                    df["risk_display"] = df["risk_level"].map(risk_badge)
 
-            if (
-                prediction_filter != "TODAS"
-                and "prediction" in df.columns
-            ):
-                df = df[
-                    df["prediction"]
-                    == int(prediction_filter)
+                display_cols = [
+                    "id",
+                    "pd_percent",
+                    "prediction",
+                    "risk_display",
+                    "limit_bal",
+                    "age",
+                    "pay_max_delay",
+                    "recent_delay_months",
+                    "consecutive_delay_months",
+                    "payment_bill_ratio_total",
+                    "recommendation",
                 ]
-
-
-            # -------------------------
-            # FILTRO PD
-            # -------------------------
-
-            if "probability_default" in df.columns:
-
-                df = df[
-                    df["probability_default"]
-                    >= min_pd / 100
-                ]
-
-                df = df.sort_values(
-                    "probability_default",
-                    ascending=False,
+                display_cols = [c for c in display_cols if c in df.columns]
+                display_df = df[display_cols].copy()
+                display_df = display_df.rename(
+                    columns={
+                        "id": "Cliente",
+                        "pd_percent": "PD %",
+                        "prediction": "Pred.",
+                        "risk_display": "Riesgo",
+                        "limit_bal": "Límite",
+                        "age": "Edad",
+                        "pay_max_delay": "Máx. atraso",
+                        "recent_delay_months": "Atrasos recientes",
+                        "consecutive_delay_months": "Atrasos consecutivos",
+                        "payment_bill_ratio_total": "Ratio pago/fact.",
+                        "recommendation": "Acción sugerida",
+                    }
                 )
 
-
-            # -------------------------
-            # PD EN PORCENTAJE
-            # -------------------------
-
-            if "probability_default" in df.columns:
-                df["pd_percent"] = (
-                    df["probability_default"]
-                    * 100
+                st.caption(f"{fmt_int(len(display_df))} clientes mostrados")
+                st.dataframe(
+                    display_df,
+                    use_container_width=True,
+                    hide_index=True,
+                    height=470,
+                    column_config={
+                        "Cliente": st.column_config.NumberColumn("Cliente", format="%d"),
+                        "PD %": st.column_config.ProgressColumn("PD %", min_value=0, max_value=100, format="%.1f%%"),
+                        "Pred.": st.column_config.NumberColumn("Pred.", format="%d"),
+                        "Límite": st.column_config.NumberColumn("Límite", format="%.0f"),
+                        "Ratio pago/fact.": st.column_config.NumberColumn("Ratio pago/fact.", format="%.3f"),
+                    },
                 )
 
+                csv = display_df.to_csv(index=False).encode("utf-8-sig")
+                st.download_button(
+                    "⬇ Descargar cartera filtrada",
+                    data=csv,
+                    file_name="cartera_filtrada_nexarisk.csv",
+                    mime="text/csv",
+                )
 
-            columns = [
-                "id",
-                "pd_percent",
-                "prediction",
-                "risk_level",
-                "limit_bal",
-                "age",
-                "pay_max_delay",
-                "recent_delay_months",
-                "consecutive_delay_months",
-                "recommendation",
-            ]
-
-            columns = [
-                c
-                for c in columns
-                if c in df.columns
-            ]
-
-            display_df = df[
-                columns
-            ].copy()
-
-
-            display_df = display_df.rename(
-                columns={
-                    "id": "Cliente",
-                    "pd_percent": "PD %",
-                    "prediction": "Pred.",
-                    "risk_level": "Riesgo",
-                    "limit_bal": "Límite",
-                    "age": "Edad",
-                    "pay_max_delay": "Máx. atraso",
-                    "recent_delay_months": "Atrasos recientes",
-                    "consecutive_delay_months": "Atrasos consecutivos",
-                    "recommendation": "Acción sugerida",
-                }
-            )
-
-
-            st.caption(
-                f"{len(display_df):,} clientes mostrados"
-            )
-
-
-            st.dataframe(
-                display_df,
-                use_container_width=True,
-                hide_index=True,
-                height=455,
-
-                column_config={
-                    "Cliente":
-                        st.column_config.NumberColumn(
-                            "Cliente",
-                            format="%d",
-                        ),
-
-                    "PD %":
-                        st.column_config.ProgressColumn(
-                            "PD %",
-                            min_value=0,
-                            max_value=100,
-                            format="%.1f%%",
-                        ),
-
-                    "Pred.":
-                        st.column_config.NumberColumn(
-                            "Pred.",
-                            format="%d",
-                        ),
-
-                    "Límite":
-                        st.column_config.NumberColumn(
-                            "Límite",
-                            format="%.0f",
-                        ),
-                },
-            )
-
-
-            csv = display_df.to_csv(
-                index=False
-            ).encode("utf-8-sig")
-
-
-            st.download_button(
-                "⬇ Descargar cartera filtrada",
-                data=csv,
-                file_name="cartera_filtrada_nexarisk.csv",
-                mime="text/csv",
-            )
-
-
-    except Exception as exc:
-
-        st.error(
-            "No fue posible cargar la cartera."
-        )
-
-        with st.expander("Detalle técnico"):
-            st.exception(exc)
-
+        except Exception as exc:
+            st.error("No fue posible cargar la cartera operativa.")
+            with st.expander("Detalle técnico"):
+                st.exception(exc)
 
 # ============================================================
 # CLIENTE 360
 # ============================================================
 
-if search_customer:
-
+if quick_search:
     st.divider()
+    with st.container(border=True):
+        st.markdown(f"## 👤 Cliente 360 · #{int(quick_customer)}")
 
-    try:
+        try:
+            customer = load_customer(int(quick_customer))
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("PD", fmt_pct(customer.get("probability_default")))
+            c2.metric("Nivel de riesgo", risk_badge(customer.get("risk_level")))
+            c3.metric("Clasificación", customer.get("prediction", "N/D"))
+            c4.metric("Límite de crédito", fmt_money(customer.get("limit_bal")))
 
-        customer = load_customer(
-            int(customer_id)
-        )
+            st.markdown("### Recomendación de gestión")
+            st.info(customer.get("recommendation", "No disponible"))
 
-        st.subheader(
-            f"Cliente 360 · #{int(customer_id)}"
-        )
+            s1, s2, s3, s4 = st.columns(4)
+            s1.metric("Edad", customer.get("age", "N/D"))
+            s2.metric("Máximo atraso", customer.get("pay_max_delay", "N/D"))
+            s3.metric("Atrasos recientes", customer.get("recent_delay_months", "N/D"))
+            s4.metric("Atrasos consecutivos", customer.get("consecutive_delay_months", "N/D"))
 
-        c1, c2, c3, c4 = st.columns(4)
+            with st.expander("Ver registro técnico completo"):
+                st.json(customer)
 
-        c1.metric(
-            "PD",
-            fmt_pct(
-                customer.get(
-                    "probability_default"
-                )
-            ),
-        )
-
-        c2.metric(
-            "Nivel de riesgo",
-            customer.get(
-                "risk_level",
-                "N/D",
-            ),
-        )
-
-        c3.metric(
-            "Clasificación",
-            customer.get(
-                "prediction",
-                "N/D",
-            ),
-        )
-
-        c4.metric(
-            "Límite de crédito",
-            fmt_num(
-                customer.get(
-                    "limit_bal"
-                )
-            ),
-        )
-
-
-        st.markdown(
-            "#### Recomendación de gestión"
-        )
-
-        st.info(
-            customer.get(
-                "recommendation",
-                "No disponible",
-            )
-        )
-
-
-        s1, s2, s3, s4 = st.columns(4)
-
-        s1.metric(
-            "Edad",
-            customer.get(
-                "age",
-                "N/D",
-            ),
-        )
-
-        s2.metric(
-            "Máximo atraso",
-            customer.get(
-                "pay_max_delay",
-                "N/D",
-            ),
-        )
-
-        s3.metric(
-            "Atrasos recientes",
-            customer.get(
-                "recent_delay_months",
-                "N/D",
-            ),
-        )
-
-        s4.metric(
-            "Atrasos consecutivos",
-            customer.get(
-                "consecutive_delay_months",
-                "N/D",
-            ),
-        )
-
-
-    except Exception as exc:
-
-        st.error(
-            "No fue posible consultar ese cliente."
-        )
-
-        with st.expander("Detalle técnico"):
-            st.exception(exc)
-
+        except Exception as exc:
+            st.error("No fue posible consultar el cliente.")
+            with st.expander("Detalle técnico"):
+                st.exception(exc)
 
 # ============================================================
-# PIE
+# FOOTER
 # ============================================================
 
 st.divider()
-
-f1, f2, f3 = st.columns(
-    [2, 1, 1]
-)
-
-with f1:
-    st.caption(
-        "NexaRisk · Proyecto Productivo IIIA"
-    )
-
-with f2:
-    st.caption(
-        f"Modelo: {summary.get('model_version', 'N/D')}"
-    )
-
-with f3:
-    st.caption(
-        "FastAPI · Supabase · Streamlit"
-    )
-
+f1, f2, f3 = st.columns([2, 1, 1])
+f1.caption("NexaRisk · Proyecto Productivo IIIA")
+f2.caption(f"Modelo: {summary.get('model_version', 'N/D')}")
+f3.caption("FastAPI · Supabase · Streamlit")
