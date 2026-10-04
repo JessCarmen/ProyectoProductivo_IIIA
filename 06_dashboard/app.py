@@ -1,5 +1,6 @@
 import os
 import time
+import textwrap
 from typing import Any
 
 import pandas as pd
@@ -12,310 +13,236 @@ import streamlit as st
 # ============================================================
 
 st.set_page_config(
-    page_title="NexaRisk | Supervisión de Riesgo",
-    page_icon="NR",
+    page_title="NexaRisk | Supervisión de Riesgo Crediticio",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 
 # ============================================================
-# PALETA
+# IDENTIDAD VISUAL
 # ============================================================
 
 NAVY = "#0B1F33"
+NAVY_2 = "#153A59"
 TEAL = "#0E7490"
 MINT = "#14B8A6"
 GOLD = "#F4B942"
 
 CLOUD = "#F5F8FB"
+WHITE = "#FFFFFF"
 INK = "#172033"
 MUTED = "#667085"
+BORDER = "#DFE7EE"
 
 GREEN = "#2E8B57"
 AMBER = "#D4A017"
 ORANGE = "#E67E22"
 RED = "#C62828"
 
-WHITE = "#FFFFFF"
-BORDER = "#E4EAF0"
+
+def html(content: str):
+    """
+    Render HTML without Markdown interpreting indentation
+    as a code block.
+    """
+    st.markdown(
+        textwrap.dedent(content).strip(),
+        unsafe_allow_html=True,
+    )
 
 
 # ============================================================
 # CSS
 # ============================================================
 
-st.markdown(
+html(
     f"""
     <style>
-
-    /* ------------------------------------------------------
-       GLOBAL
-    ------------------------------------------------------ */
-
     .stApp {{
-        background-color: {CLOUD};
+        background: {CLOUD};
+    }}
+
+    .block-container {{
+        max-width: 1650px;
+        padding-top: 1rem;
+        padding-bottom: 2rem;
     }}
 
     [data-testid="stHeader"] {{
         background: transparent;
     }}
 
-    [data-testid="stToolbar"] {{
-        visibility: hidden;
-    }}
+    /* ---------- HEADER ---------- */
 
-    .block-container {{
-        max-width: 1700px;
-        padding-top: 1.1rem;
-        padding-bottom: 2rem;
-    }}
-
-    h1, h2, h3 {{
-        color: {INK};
-    }}
-
-
-    /* ------------------------------------------------------
-       HEADER
-    ------------------------------------------------------ */
-
-    .nr-header {{
-        background:
-            linear-gradient(
-                120deg,
-                {NAVY} 0%,
-                #123653 65%,
-                {TEAL} 100%
-            );
-
-        border-radius: 14px;
-        padding: 20px 25px;
+    .nexa-header {{
+        background: linear-gradient(
+            120deg,
+            {NAVY} 0%,
+            {NAVY_2} 65%,
+            {TEAL} 100%
+        );
+        border-radius: 16px;
+        padding: 22px 26px;
         margin-bottom: 16px;
-
-        box-shadow:
-            0 7px 22px rgba(11,31,51,0.12);
-
+        box-shadow: 0 8px 24px rgba(11,31,51,.12);
         display: flex;
-        align-items: center;
         justify-content: space-between;
+        align-items: center;
     }}
 
-    .nr-brand {{
+    .nexa-brand {{
         display: flex;
         align-items: center;
         gap: 16px;
     }}
 
-    .nr-logo {{
+    .nexa-logo {{
         width: 58px;
         height: 58px;
-
-        background:
-            linear-gradient(
-                135deg,
-                {MINT},
-                {TEAL}
-            );
-
-        border-radius: 12px;
-
+        border-radius: 13px;
+        background: linear-gradient(135deg, {MINT}, {TEAL});
+        color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-
-        color: white;
         font-size: 23px;
-        font-weight: 800;
-
-        letter-spacing: -1px;
-
-        box-shadow:
-            inset 0 0 0 1px rgba(255,255,255,.18);
+        font-weight: 850;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.20);
     }}
 
-    .nr-title {{
+    .nexa-name {{
         color: white;
         font-size: 27px;
-        font-weight: 750;
-        margin: 0;
+        line-height: 1.05;
+        font-weight: 800;
     }}
 
-    .nr-subtitle {{
+    .nexa-subtitle {{
+        margin-top: 5px;
         color: rgba(255,255,255,.75);
         font-size: 13px;
-        margin-top: 3px;
     }}
 
-    .nr-status {{
-        background: rgba(255,255,255,.1);
-        border: 1px solid rgba(255,255,255,.25);
-
-        border-radius: 10px;
-        padding: 9px 14px;
-
+    .nexa-status {{
         color: white;
+        background: rgba(255,255,255,.10);
+        border: 1px solid rgba(255,255,255,.20);
+        padding: 9px 13px;
+        border-radius: 10px;
         font-size: 12px;
     }}
 
-    .nr-online {{
-        color: #51E3A4;
-        font-weight: 700;
+    .online {{
+        color: #58E6A7;
+        font-weight: 800;
     }}
 
+    /* ---------- KPI ---------- */
 
-    /* ------------------------------------------------------
-       KPI CARD
-    ------------------------------------------------------ */
-
-    .nr-card {{
-        background: {WHITE};
-
-        border: 1px solid {BORDER};
-        border-radius: 12px;
-
-        padding: 17px 18px;
-
-        box-shadow:
-            0 3px 12px rgba(16,24,40,.04);
-
-        min-height: 112px;
-    }}
-
-    .nr-label {{
-        color: {MUTED};
-
-        font-size: 11px;
-        font-weight: 700;
-
-        text-transform: uppercase;
-        letter-spacing: .6px;
-    }}
-
-    .nr-value {{
-        color: {INK};
-
-        font-size: 29px;
-        font-weight: 760;
-
-        margin-top: 4px;
-    }}
-
-    .nr-caption {{
-        color: {MUTED};
-        font-size: 11px;
-        margin-top: 2px;
-    }}
-
-    .critical {{
-        border-left: 5px solid {RED};
-    }}
-
-    .high {{
-        border-left: 5px solid {ORANGE};
-    }}
-
-    .medium {{
-        border-left: 5px solid {AMBER};
-    }}
-
-    .low {{
-        border-left: 5px solid {GREEN};
-    }}
-
-
-    /* ------------------------------------------------------
-       SECCIONES
-    ------------------------------------------------------ */
-
-    .nr-section {{
+    .kpi-card {{
         background: white;
-
         border: 1px solid {BORDER};
-        border-radius: 12px;
-
-        padding: 17px;
-
-        box-shadow:
-            0 3px 12px rgba(16,24,40,.04);
-
-        margin-bottom: 10px;
+        border-radius: 13px;
+        padding: 17px 18px;
+        min-height: 112px;
+        box-shadow: 0 3px 12px rgba(16,24,40,.04);
     }}
 
-    .nr-section-title {{
-        color: {INK};
-
-        font-size: 15px;
+    .kpi-label {{
+        font-size: 11px;
+        color: {MUTED};
         font-weight: 750;
-
-        margin-bottom: 3px;
+        letter-spacing: .55px;
+        text-transform: uppercase;
     }}
 
-    .nr-section-subtitle {{
+    .kpi-value {{
+        margin-top: 5px;
+        color: {INK};
+        font-size: 29px;
+        font-weight: 800;
+    }}
+
+    .kpi-note {{
+        margin-top: 3px;
         color: {MUTED};
         font-size: 11px;
-        margin-bottom: 12px;
     }}
 
+    .accent-red {{
+        border-left: 5px solid {RED};
+    }}
 
-    /* ------------------------------------------------------
-       PANEL DERECHO
-    ------------------------------------------------------ */
+    .accent-teal {{
+        border-left: 5px solid {MINT};
+    }}
 
-    .nr-filter-title {{
-        color: white;
+    /* ---------- TITULOS ---------- */
+
+    .section-title {{
+        color: {INK};
         font-size: 16px;
-        font-weight: 750;
+        font-weight: 800;
+        margin-bottom: 1px;
     }}
 
-    .nr-filter-header {{
+    .section-caption {{
+        color: {MUTED};
+        font-size: 11px;
+        margin-bottom: 9px;
+    }}
+
+    /* ---------- PANEL FILTROS ---------- */
+
+    .filter-head {{
         background: {NAVY};
-
-        padding: 13px 15px;
-
-        border-radius: 10px 10px 0 0;
-
+        color: white;
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-weight: 800;
         margin-bottom: 10px;
     }}
 
+    /* ---------- ALERTA ---------- */
 
-    /* ------------------------------------------------------
-       ALERTA EJECUTIVA
-    ------------------------------------------------------ */
-
-    .nr-alert {{
+    .exec-alert {{
+        margin-top: 8px;
         background: #FFF7F5;
-        border: 1px solid #FFD7D0;
+        border: 1px solid #F7D6CF;
         border-left: 5px solid {RED};
-
         border-radius: 10px;
-
         padding: 13px 15px;
-
         color: {INK};
         font-size: 12px;
-
-        margin-top: 8px;
     }}
 
+    /* ---------- STREAMLIT METRICS ---------- */
 
-    /* ------------------------------------------------------
-       BADGES
-    ------------------------------------------------------ */
-
-    .badge-critical {{
-        color: {RED};
-        font-weight: 700;
+    [data-testid="stMetric"] {{
+        background: white;
+        border: 1px solid {BORDER};
+        padding: 14px;
+        border-radius: 12px;
     }}
 
-    .badge-high {{
-        color: {ORANGE};
+    /* ---------- TABLA ---------- */
+
+    [data-testid="stDataFrame"] {{
+        background: white;
+        border-radius: 10px;
+    }}
+
+    /* ---------- BOTON ---------- */
+
+    .stButton > button {{
+        border-radius: 8px;
         font-weight: 700;
     }}
 
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
@@ -323,13 +250,10 @@ st.markdown(
 # API
 # ============================================================
 
-def get_api_base_url():
-
+def get_api_base_url() -> str:
     try:
         if "API_BASE_URL" in st.secrets:
-            return str(
-                st.secrets["API_BASE_URL"]
-            ).rstrip("/")
+            return str(st.secrets["API_BASE_URL"]).rstrip("/")
     except Exception:
         pass
 
@@ -340,24 +264,20 @@ def get_api_base_url():
 
 
 API_BASE_URL = get_api_base_url()
-
 REQUEST_TIMEOUT = 90
 
 
 def api_get(
     endpoint: str,
-    params=None,
-    retries=2,
+    params: dict | None = None,
+    retries: int = 2,
 ) -> Any:
 
     url = f"{API_BASE_URL}{endpoint}"
-
     last_error = None
 
     for attempt in range(retries + 1):
-
         try:
-
             response = requests.get(
                 url,
                 params=params,
@@ -365,47 +285,33 @@ def api_get(
             )
 
             response.raise_for_status()
-
             return response.json()
 
         except requests.RequestException as exc:
-
             last_error = exc
 
             if attempt < retries:
                 time.sleep(3)
 
     raise RuntimeError(
-        f"No fue posible conectar con FastAPI: "
-        f"{last_error}"
+        f"No fue posible conectar con FastAPI: {last_error}"
     )
 
 
 @st.cache_data(ttl=60)
 def load_summary():
-
-    return api_get(
-        "/portfolio/summary"
-    )
+    return api_get("/portfolio/summary")
 
 
 @st.cache_data(ttl=60)
 def load_portfolio(
-    risk_level=None,
-    limit=500,
+    risk_level: str | None = None,
+    limit: int = 250,
 ):
+    params = {"limit": limit}
 
-    params = {
-        "limit": limit,
-    }
-
-    if (
-        risk_level
-        and risk_level != "TODOS"
-    ):
-        params[
-            "risk_level"
-        ] = risk_level
+    if risk_level and risk_level != "TODOS":
+        params["risk_level"] = risk_level
 
     return api_get(
         "/portfolio",
@@ -413,8 +319,7 @@ def load_portfolio(
     )
 
 
-def load_customer(customer_id):
-
+def load_customer(customer_id: int):
     return api_get(
         f"/portfolio/{customer_id}"
     )
@@ -424,13 +329,11 @@ def load_customer(customer_id):
 # HELPERS
 # ============================================================
 
-def extract_records(payload):
-
+def extract_records(payload: Any) -> list:
     if isinstance(payload, list):
         return payload
 
     if isinstance(payload, dict):
-
         for key in [
             "items",
             "data",
@@ -438,7 +341,6 @@ def extract_records(payload):
             "portfolio",
             "records",
         ]:
-
             value = payload.get(key)
 
             if isinstance(value, list):
@@ -447,18 +349,13 @@ def extract_records(payload):
     return []
 
 
-def normalize_df(payload):
-
-    records = extract_records(
-        payload
-    )
+def normalize_df(payload: Any) -> pd.DataFrame:
+    records = extract_records(payload)
 
     if not records:
         return pd.DataFrame()
 
-    df = pd.DataFrame(
-        records
-    )
+    df = pd.DataFrame(records)
 
     numeric_columns = [
         "id",
@@ -473,9 +370,7 @@ def normalize_df(payload):
     ]
 
     for col in numeric_columns:
-
         if col in df.columns:
-
             df[col] = pd.to_numeric(
                 df[col],
                 errors="coerce",
@@ -484,53 +379,47 @@ def normalize_df(payload):
     return df
 
 
-def format_integer(value):
-
+def fmt_int(value):
     try:
-        return f"{int(value):,}"
-
+        return f"{int(value):,}".replace(",", ".")
     except Exception:
         return "N/D"
 
 
-def format_percent(value):
-
+def fmt_pct(value):
     try:
-        return f"{float(value):.2%}"
-
+        return f"{float(value) * 100:.2f}%"
     except Exception:
         return "N/D"
 
 
-def format_money(value):
-
+def fmt_num(value):
     try:
-        return f"{float(value):,.0f}"
-
+        return f"{float(value):,.0f}".replace(",", ".")
     except Exception:
         return "N/D"
 
 
 # ============================================================
-# DATOS
+# CARGA INICIAL
 # ============================================================
 
 try:
-
     summary = load_summary()
 
 except Exception as exc:
-
     st.error(
         "No fue posible conectar con FastAPI."
     )
 
     st.info(
-        "Render Free puede tardar unos segundos "
-        "en despertar."
+        "El servicio gratuito de Render puede tardar "
+        "algunos segundos en despertar."
     )
 
-    st.exception(exc)
+    with st.expander("Detalle técnico"):
+        st.exception(exc)
+
     st.stop()
 
 
@@ -538,182 +427,127 @@ except Exception as exc:
 # HEADER
 # ============================================================
 
-st.markdown(
+html(
     f"""
-    <div class="nr-header">
-
-        <div class="nr-brand">
-
-            <div class="nr-logo">
-                NR
-            </div>
+    <div class="nexa-header">
+        <div class="nexa-brand">
+            <div class="nexa-logo">NR</div>
 
             <div>
-
-                <div class="nr-title">
+                <div class="nexa-name">
                     NexaRisk
                 </div>
 
-                <div class="nr-subtitle">
+                <div class="nexa-subtitle">
                     Centro de Supervisión de Riesgo Crediticio
                 </div>
-
             </div>
-
         </div>
 
-        <div class="nr-status">
-
-            <span class="nr-online">
-                ● API ONLINE
-            </span>
-
+        <div class="nexa-status">
+            <span class="online">● API ONLINE</span>
             &nbsp;&nbsp;|&nbsp;&nbsp;
-
-            Modelo
-            {summary.get("model_version", "N/D")}
-
+            Modelo {summary.get("model_version", "N/D")}
         </div>
-
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
 # ============================================================
-# KPIs SUPERIORES
+# CALCULOS
 # ============================================================
 
-total = int(
-    summary.get("total", 0)
-)
+total = int(summary.get("total", 0))
+bajo = int(summary.get("bajo", 0))
+medio = int(summary.get("medio", 0))
+alto = int(summary.get("alto", 0))
+critico = int(summary.get("critico", 0))
 
-critical = int(
-    summary.get("critico", 0)
-)
-
-high = int(
-    summary.get("alto", 0)
-)
-
-priority = (
-    critical
-    + high
-)
+priority = alto + critico
 
 priority_pct = (
     priority / total
-    if total > 0
+    if total
     else 0
 )
 
+
+# ============================================================
+# KPIs
+# ============================================================
 
 k1, k2, k3, k4 = st.columns(4)
 
 
 with k1:
-
-    st.markdown(
+    html(
         f"""
-        <div class="nr-card">
-            <div class="nr-label">
-                Cartera evaluada
-            </div>
-
-            <div class="nr-value">
-                {format_integer(total)}
-            </div>
-
-            <div class="nr-caption">
+        <div class="kpi-card accent-teal">
+            <div class="kpi-label">Cartera evaluada</div>
+            <div class="kpi-value">{fmt_int(total)}</div>
+            <div class="kpi-note">
                 Clientes con scoring vigente
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
 with k2:
-
-    st.markdown(
+    html(
         f"""
-        <div class="nr-card">
-            <div class="nr-label">
-                PD promedio
+        <div class="kpi-card">
+            <div class="kpi-label">PD promedio</div>
+            <div class="kpi-value">
+                {fmt_pct(summary.get("pd_promedio"))}
             </div>
-
-            <div class="nr-value">
-                {
-                    format_percent(
-                        summary.get(
-                            "pd_promedio"
-                        )
-                    )
-                }
-            </div>
-
-            <div class="nr-caption">
-                Probabilidad promedio de incumplimiento
+            <div class="kpi-note">
+                Probabilidad media de incumplimiento
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
 with k3:
-
-    st.markdown(
+    html(
         f"""
-        <div class="nr-card critical">
-            <div class="nr-label">
+        <div class="kpi-card accent-red">
+            <div class="kpi-label">
                 Gestión prioritaria
             </div>
 
-            <div class="nr-value">
-                {format_integer(priority)}
+            <div class="kpi-value">
+                {fmt_int(priority)}
             </div>
 
-            <div class="nr-caption">
-                {
-                    format_percent(
-                        priority_pct
-                    )
-                }
+            <div class="kpi-note">
+                {fmt_pct(priority_pct)}
                 de la cartera en Alto + Crítico
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
 with k4:
-
-    st.markdown(
+    html(
         f"""
-        <div class="nr-card">
-            <div class="nr-label">
-                Predicción = 1
+        <div class="kpi-card">
+            <div class="kpi-label">
+                Predicción positiva
             </div>
 
-            <div class="nr-value">
-                {
-                    format_integer(
-                        summary.get(
-                            "prediction_1"
-                        )
-                    )
-                }
+            <div class="kpi-value">
+                {fmt_int(summary.get("prediction_1"))}
             </div>
 
-            <div class="nr-caption">
-                Clasificados como potencial incumplimiento
+            <div class="kpi-note">
+                Clientes clasificados como potencial incumplimiento
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -721,30 +555,27 @@ st.write("")
 
 
 # ============================================================
-# LAYOUT PRINCIPAL
+# LAYOUT: DASHBOARD + FILTROS DERECHA
 # ============================================================
 
-main_col, filter_col = st.columns(
-    [4.8, 1.25],
+main_col, right_col = st.columns(
+    [5, 1.35],
     gap="large",
 )
 
 
 # ============================================================
-# PANEL DERECHO DE FILTROS
+# PANEL DERECHO
 # ============================================================
 
-with filter_col:
+with right_col:
 
-    st.markdown(
+    html(
         """
-        <div class="nr-filter-header">
-            <div class="nr-filter-title">
-                Filtros de cartera
-            </div>
+        <div class="filter-head">
+            Filtros de cartera
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     risk_filter = st.selectbox(
@@ -776,7 +607,7 @@ with filter_col:
     )
 
     row_limit = st.selectbox(
-        "Clientes a mostrar",
+        "Registros",
         [
             50,
             100,
@@ -789,29 +620,25 @@ with filter_col:
 
     st.divider()
 
-    st.markdown(
-        "**Consulta rápida**"
+    html(
+        """
+        <div class="section-title">
+            Consulta rápida
+        </div>
+        """
     )
 
-    quick_customer = st.number_input(
+    customer_id = st.number_input(
         "ID cliente",
         min_value=1,
-        value=1,
         step=1,
+        value=1,
     )
 
-    quick_search = st.button(
+    search_customer = st.button(
         "Consultar cliente",
         type="primary",
         use_container_width=True,
-    )
-
-    st.divider()
-
-    st.caption(
-        "Los filtros de clasificación y PD "
-        "se aplican sobre la cartera cargada "
-        "desde FastAPI."
     )
 
 
@@ -822,28 +649,26 @@ with filter_col:
 with main_col:
 
     # --------------------------------------------------------
-    # DISTRIBUCION DE RIESGO
+    # FILA DE GRAFICOS
     # --------------------------------------------------------
 
-    chart1, chart2 = st.columns(
-        [1.3, 1],
+    g1, g2 = st.columns(
+        [1.25, 1],
         gap="medium",
     )
 
 
-    with chart1:
+    with g1:
 
-        st.markdown(
+        html(
             """
-            <div class="nr-section-title">
+            <div class="section-title">
                 Distribución de riesgo
             </div>
-
-            <div class="nr-section-subtitle">
-                Composición de la cartera según banda de riesgo
+            <div class="section-caption">
+                Clientes por banda de riesgo
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
         risk_df = pd.DataFrame(
@@ -854,59 +679,32 @@ with main_col:
                     "ALTO",
                     "CRITICO",
                 ],
-
                 "Clientes": [
-                    int(
-                        summary.get(
-                            "bajo",
-                            0,
-                        )
-                    ),
-
-                    int(
-                        summary.get(
-                            "medio",
-                            0,
-                        )
-                    ),
-
-                    int(
-                        summary.get(
-                            "alto",
-                            0,
-                        )
-                    ),
-
-                    int(
-                        summary.get(
-                            "critico",
-                            0,
-                        )
-                    ),
+                    bajo,
+                    medio,
+                    alto,
+                    critico,
                 ],
             }
         )
 
         st.bar_chart(
-            risk_df.set_index(
-                "Nivel"
-            )
+            risk_df.set_index("Nivel"),
+            height=310,
         )
 
 
-    with chart2:
+    with g2:
 
-        st.markdown(
+        html(
             """
-            <div class="nr-section-title">
+            <div class="section-title">
                 Clasificación del modelo
             </div>
-
-            <div class="nr-section-subtitle">
-                Distribución de clientes 0 / 1
+            <div class="section-caption">
+                Distribución de predicción binaria
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
         prediction_df = pd.DataFrame(
@@ -915,7 +713,6 @@ with main_col:
                     "Predicción 0",
                     "Predicción 1",
                 ],
-
                 "Clientes": [
                     int(
                         summary.get(
@@ -923,7 +720,6 @@ with main_col:
                             0,
                         )
                     ),
-
                     int(
                         summary.get(
                             "prediction_1",
@@ -935,48 +731,31 @@ with main_col:
         )
 
         st.bar_chart(
-            prediction_df.set_index(
-                "Clase"
-            )
+            prediction_df.set_index("Clase"),
+            height=310,
         )
 
 
     # --------------------------------------------------------
-    # ALERTA EJECUTIVA
+    # LECTURA EJECUTIVA
     # --------------------------------------------------------
 
-    st.markdown(
+    html(
         f"""
-        <div class="nr-alert">
-
+        <div class="exec-alert">
             <b>Lectura ejecutiva:</b>
-
             actualmente
-            <b>{format_integer(priority)}</b>
-            clientes se encuentran en niveles
-
-            <span class="badge-high">
-                ALTO
-            </span>
-
-            o
-
-            <span class="badge-critical">
-                CRÍTICO
-            </span>,
-
+            <b>{fmt_int(priority)}</b>
+            clientes están clasificados en niveles
+            <b>ALTO o CRÍTICO</b>,
             equivalentes al
-
-            <b>{format_percent(priority_pct)}</b>
-
+            <b>{fmt_pct(priority_pct)}</b>
             de la cartera evaluada.
 
-            Esta población representa la principal
+            Esta población constituye la principal
             cola de seguimiento preventivo.
-
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -984,81 +763,62 @@ with main_col:
 
 
     # --------------------------------------------------------
-    # CARTERA OPERATIVA
+    # TABLA
     # --------------------------------------------------------
 
-    st.markdown(
+    html(
         """
-        <div class="nr-section-title">
+        <div class="section-title">
             Cartera priorizada
         </div>
 
-        <div class="nr-section-subtitle">
-            Clientes ordenados por mayor probabilidad
-            de incumplimiento
+        <div class="section-caption">
+            Ordenada por mayor probabilidad de incumplimiento
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
     try:
-
         payload = load_portfolio(
             risk_level=risk_filter,
             limit=row_limit,
         )
 
-        df = normalize_df(
-            payload
-        )
+        df = normalize_df(payload)
 
 
         if df.empty:
-
             st.warning(
-                "No existen registros "
-                "para los filtros seleccionados."
+                "No existen registros para los filtros seleccionados."
             )
 
         else:
 
-            # ------------------------------------------------
+            # -------------------------
             # FILTRO PREDICCION
-            # ------------------------------------------------
+            # -------------------------
 
             if (
-                prediction_filter
-                != "TODAS"
+                prediction_filter != "TODAS"
                 and "prediction" in df.columns
             ):
-
                 df = df[
                     df["prediction"]
-                    == int(
-                        prediction_filter
-                    )
+                    == int(prediction_filter)
                 ]
 
 
-            # ------------------------------------------------
+            # -------------------------
             # FILTRO PD
-            # ------------------------------------------------
+            # -------------------------
 
-            if (
-                "probability_default"
-                in df.columns
-            ):
+            if "probability_default" in df.columns:
 
                 df = df[
-                    df[
-                        "probability_default"
-                    ]
-                    >= (
-                        min_pd / 100
-                    )
+                    df["probability_default"]
+                    >= min_pd / 100
                 ]
-
 
                 df = df.sort_values(
                     "probability_default",
@@ -1066,13 +826,20 @@ with main_col:
                 )
 
 
-            # ------------------------------------------------
-            # COLUMNAS
-            # ------------------------------------------------
+            # -------------------------
+            # PD EN PORCENTAJE
+            # -------------------------
 
-            selected_cols = [
+            if "probability_default" in df.columns:
+                df["pd_percent"] = (
+                    df["probability_default"]
+                    * 100
+                )
+
+
+            columns = [
                 "id",
-                "probability_default",
+                "pd_percent",
                 "prediction",
                 "risk_level",
                 "limit_bal",
@@ -1083,55 +850,35 @@ with main_col:
                 "recommendation",
             ]
 
-            selected_cols = [
-                col
-                for col in selected_cols
-                if col in df.columns
+            columns = [
+                c
+                for c in columns
+                if c in df.columns
             ]
 
             display_df = df[
-                selected_cols
+                columns
             ].copy()
 
 
             display_df = display_df.rename(
                 columns={
-                    "id":
-                        "Cliente",
-
-                    "probability_default":
-                        "PD",
-
-                    "prediction":
-                        "Pred.",
-
-                    "risk_level":
-                        "Riesgo",
-
-                    "limit_bal":
-                        "Límite",
-
-                    "age":
-                        "Edad",
-
-                    "pay_max_delay":
-                        "Máx. atraso",
-
-                    "recent_delay_months":
-                        "Atrasos recientes",
-
-                    "consecutive_delay_months":
-                        "Atrasos consecutivos",
-
-                    "recommendation":
-                        "Acción sugerida",
+                    "id": "Cliente",
+                    "pd_percent": "PD %",
+                    "prediction": "Pred.",
+                    "risk_level": "Riesgo",
+                    "limit_bal": "Límite",
+                    "age": "Edad",
+                    "pay_max_delay": "Máx. atraso",
+                    "recent_delay_months": "Atrasos recientes",
+                    "consecutive_delay_months": "Atrasos consecutivos",
+                    "recommendation": "Acción sugerida",
                 }
             )
 
 
             st.caption(
-                f"{len(display_df):,} "
-                "clientes mostrados"
+                f"{len(display_df):,} clientes mostrados"
             )
 
 
@@ -1139,21 +886,21 @@ with main_col:
                 display_df,
                 use_container_width=True,
                 hide_index=True,
+                height=455,
 
                 column_config={
-
-                    "PD":
-                        st.column_config.ProgressColumn(
-                            "PD",
-                            min_value=0,
-                            max_value=1,
-                            format="%.1f%%",
-                        ),
-
                     "Cliente":
                         st.column_config.NumberColumn(
                             "Cliente",
                             format="%d",
+                        ),
+
+                    "PD %":
+                        st.column_config.ProgressColumn(
+                            "PD %",
+                            min_value=0,
+                            max_value=100,
+                            format="%.1f%%",
                         ),
 
                     "Pred.":
@@ -1171,22 +918,15 @@ with main_col:
             )
 
 
-            # ------------------------------------------------
-            # DESCARGA
-            # ------------------------------------------------
-
             csv = display_df.to_csv(
                 index=False
-            ).encode(
-                "utf-8-sig"
-            )
+            ).encode("utf-8-sig")
+
 
             st.download_button(
-                "Descargar cartera filtrada",
+                "⬇ Descargar cartera filtrada",
                 data=csv,
-                file_name=(
-                    "cartera_riesgo_filtrada.csv"
-                ),
+                file_name="cartera_filtrada_nexarisk.csv",
                 mime="text/csv",
             )
 
@@ -1194,13 +934,10 @@ with main_col:
     except Exception as exc:
 
         st.error(
-            "No fue posible cargar "
-            "la cartera operativa."
+            "No fue posible cargar la cartera."
         )
 
-        with st.expander(
-            "Detalle técnico"
-        ):
+        with st.expander("Detalle técnico"):
             st.exception(exc)
 
 
@@ -1208,44 +945,37 @@ with main_col:
 # CLIENTE 360
 # ============================================================
 
-if quick_search:
+if search_customer:
 
     st.divider()
-
-    st.subheader(
-        f"Cliente 360 · #{int(quick_customer)}"
-    )
 
     try:
 
         customer = load_customer(
-            int(
-                quick_customer
-            )
+            int(customer_id)
         )
 
-        risk = customer.get(
-            "risk_level",
-            "N/D",
+        st.subheader(
+            f"Cliente 360 · #{int(customer_id)}"
         )
-
-        probability = customer.get(
-            "probability_default"
-        )
-
 
         c1, c2, c3, c4 = st.columns(4)
 
         c1.metric(
             "PD",
-            format_percent(
-                probability
+            fmt_pct(
+                customer.get(
+                    "probability_default"
+                )
             ),
         )
 
         c2.metric(
-            "Riesgo",
-            risk,
+            "Nivel de riesgo",
+            customer.get(
+                "risk_level",
+                "N/D",
+            ),
         )
 
         c3.metric(
@@ -1258,7 +988,7 @@ if quick_search:
 
         c4.metric(
             "Límite de crédito",
-            format_money(
+            fmt_num(
                 customer.get(
                     "limit_bal"
                 )
@@ -1267,7 +997,7 @@ if quick_search:
 
 
         st.markdown(
-            "### Recomendación de gestión"
+            "#### Recomendación de gestión"
         )
 
         st.info(
@@ -1278,9 +1008,9 @@ if quick_search:
         )
 
 
-        b1, b2, b3, b4 = st.columns(4)
+        s1, s2, s3, s4 = st.columns(4)
 
-        b1.metric(
+        s1.metric(
             "Edad",
             customer.get(
                 "age",
@@ -1288,7 +1018,7 @@ if quick_search:
             ),
         )
 
-        b2.metric(
+        s2.metric(
             "Máximo atraso",
             customer.get(
                 "pay_max_delay",
@@ -1296,7 +1026,7 @@ if quick_search:
             ),
         )
 
-        b3.metric(
+        s3.metric(
             "Atrasos recientes",
             customer.get(
                 "recent_delay_months",
@@ -1304,7 +1034,7 @@ if quick_search:
             ),
         )
 
-        b4.metric(
+        s4.metric(
             "Atrasos consecutivos",
             customer.get(
                 "consecutive_delay_months",
@@ -1316,13 +1046,10 @@ if quick_search:
     except Exception as exc:
 
         st.error(
-            "No fue posible consultar "
-            "el cliente."
+            "No fue posible consultar ese cliente."
         )
 
-        with st.expander(
-            "Detalle técnico"
-        ):
+        with st.expander("Detalle técnico"):
             st.exception(exc)
 
 
@@ -1332,25 +1059,21 @@ if quick_search:
 
 st.divider()
 
-footer1, footer2, footer3 = st.columns(
+f1, f2, f3 = st.columns(
     [2, 1, 1]
 )
 
-with footer1:
-
+with f1:
     st.caption(
         "NexaRisk · Proyecto Productivo IIIA"
     )
 
-with footer2:
-
+with f2:
     st.caption(
-        f"Modelo: "
-        f"{summary.get('model_version', 'N/D')}"
+        f"Modelo: {summary.get('model_version', 'N/D')}"
     )
 
-with footer3:
-
+with f3:
     st.caption(
         "FastAPI · Supabase · Streamlit"
     )
