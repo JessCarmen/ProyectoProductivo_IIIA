@@ -1,189 +1,485 @@
-import json
 import os
-from functools import lru_cache
-from pathlib import Path
 
-import joblib
-import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import create_engine, text
 
+
+# ============================================================
+# CONFIGURACION
+# ============================================================
+
 load_dotenv()
-ROOT = Path(__file__).resolve().parents[1]
-MODEL_PATH = ROOT / "04_ml" / "models" / "model.pkl"
-METADATA_PATH = ROOT / "04_ml" / "models" / "model_metadata.json"
 
-app = FastAPI(title="Credit Risk API", version="2.0.0")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-
-def get_engine():
-    database_url = os.getenv("DATABASE_URL")
-    if not database_url:
-        raise RuntimeError("No se encontro DATABASE_URL en el entorno")
-    return create_engine(database_url, pool_pre_ping=True)
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL no esta configurado. "
+        "Definelo en .env localmente o en Environment Variables en Render."
+    )
 
 
-@lru_cache(maxsize=1)
-def get_model_bundle():
-    if not MODEL_PATH.exists() or not METADATA_PATH.exists():
-        raise RuntimeError("Faltan model.pkl o model_metadata.json")
-    model = joblib.load(MODEL_PATH)
-    metadata = json.loads(METADATA_PATH.read_text(encoding="utf-8"))
-    return model, metadata
+# ============================================================
+# CONEXION A SUPABASE / POSTGRESQL
+# ============================================================
+
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_size=2,
+    max_overflow=1,
+    pool_recycle=300,
+)
 
 
-def risk_level(probability: float) -> str:
-    if probability < 0.20:
-        return "BAJO"
-    if probability < 0.40:
-        return "MEDIO"
-    if probability < 0.70:
-        return "ALTO"
-    return "CRITICO"
+# ============================================================
+# FASTAPI
+# ============================================================
+
+app = FastAPI(
+    title="Proyecto Productivo IIIA - API de Riesgo Crediticio",
+    description=(
+        "API publica para consultar los resultados del scoring crediticio "
+        "persistidos en la capa Gold de Supabase."
+    ),
+    version="1.0.0",
+)
 
 
-def recommendation(features: dict, risk: str) -> str:
-    recs = []
-    if risk == "CRITICO":
-        recs.append("Priorizar la atencion preventiva y revisar la capacidad de pago antes de ampliar exposicion crediticia.")
-    elif risk == "ALTO":
-        recs.append("Realizar seguimiento preventivo y revisar el comportamiento reciente de pago.")
-    elif risk == "MEDIO":
-        recs.append("Mantener seguimiento periodico y revisar señales tempranas de deterioro.")
-    else:
-        recs.append("Mantener seguimiento estandar de acuerdo con la politica de riesgo.")
+MODEL_VERSION = "v20260929_064028"
 
-    def number(name, default=0.0):
-        try:
-            value = features.get(name, default)
-            return default if value is None else float(value)
-        except (TypeError, ValueError):
-            return default
-
-    if number("recent_delay_months") >= 2 or number("pay_max_delay") >= 3:
-        recs.append("Revisar los atrasos recientes y establecer contacto preventivo cuando corresponda.")
-    if number("consecutive_delay_months") >= 2:
-        recs.append("Evaluar medidas de normalizacion por la presencia de retrasos consecutivos.")
-    ratio = features.get("payment_bill_ratio_total")
-    if ratio is not None:
-        try:
-            if float(ratio) < 0.50:
-                recs.append("Revisar la relacion historica entre pagos y facturacion.")
-        except (TypeError, ValueError):
-            pass
-    return " ".join(recs)
+VALID_RISK_LEVELS = {
+    "BAJO",
+    "MEDIO",
+    "ALTO",
+    "CRITICO",
+}
 
 
-class PredictionResponse(BaseModel):
-    id: int
-    model_version: str
-    probability_default: float
-    prediction: int
-    risk_level: str
-    recommendation: str
-    threshold: float
+# ============================================================
+# HELPERS
+# ============================================================
+
+def serialize_row(row):
+    """
+    Convierte una fila SQLAlchemy en un objeto compatible con JSON.
+    Maneja automaticamente Decimal, datetime y otros tipos.
+    """
+    if row is None:
+        return None
+
+    return jsonable_encoder(dict(row))
 
 
-@app.get("/health")
-def health():
-    model, metadata = get_model_bundle()
+def serialize_rows(rows):
+    """
+    Convierte varias filas SQLAlchemy en una lista JSON.
+    """
+    return [
+        jsonable_encoder(dict(row))
+        for row in rows
+    ]
+
+
+# ============================================================
+# ROOT
+# ============================================================
+
+@app.get("/")
+def root():
     return {
         "status": "ok",
-        "model_loaded": model is not None,
-        "model_version": metadata.get("model_version"),
-        "algorithm": metadata.get("algorithm"),
+        "service": "Proyecto Productivo IIIA API",
+        "description": "API publica de scoring de riesgo crediticio",
+        "model_version": MODEL_VERSION,
+        "docs": "/docs",
+        "health": "/health",
     }
 
 
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+@app.get("/health")
+def health():
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+
+        return {
+            "status": "ok",
+            "database": "connected",
+            "mode": "portfolio_scoring",
+            "model_version": MODEL_VERSION,
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"No fue posible conectar con la base de datos: {exc}",
+        )
+
+
+# ============================================================
+# RESUMEN GENERAL DE CARTERA
+# ============================================================
+
 @app.get("/portfolio/summary")
 def portfolio_summary():
-    query = text("""
+    query = text(
+        """
         SELECT
-            COUNT(*)::int AS total,
-            AVG(probability_default)::float AS pd_promedio,
-            COUNT(*) FILTER (WHERE prediction = 1)::int AS prediccion_1,
-            COUNT(*) FILTER (WHERE risk_level = 'BAJO')::int AS bajo,
-            COUNT(*) FILTER (WHERE risk_level = 'MEDIO')::int AS medio,
-            COUNT(*) FILTER (WHERE risk_level = 'ALTO')::int AS alto,
-            COUNT(*) FILTER (WHERE risk_level = 'CRITICO')::int AS critico
-        FROM gold.vw_portfolio_scoring_current
-    """)
-    engine = get_engine()
+            COUNT(*) AS total,
+            AVG(probability_default) AS pd_promedio,
+
+            COUNT(*) FILTER (
+                WHERE prediction = 0
+            ) AS prediction_0,
+
+            COUNT(*) FILTER (
+                WHERE prediction = 1
+            ) AS prediction_1,
+
+            COUNT(*) FILTER (
+                WHERE risk_level = 'BAJO'
+            ) AS bajo,
+
+            COUNT(*) FILTER (
+                WHERE risk_level = 'MEDIO'
+            ) AS medio,
+
+            COUNT(*) FILTER (
+                WHERE risk_level = 'ALTO'
+            ) AS alto,
+
+            COUNT(*) FILTER (
+                WHERE risk_level = 'CRITICO'
+            ) AS critico,
+
+            MIN(probability_default) AS pd_min,
+
+            MAX(probability_default) AS pd_max
+
+        FROM gold.vw_portfolio_scoring_current;
+        """
+    )
+
     try:
         with engine.connect() as conn:
             row = conn.execute(query).mappings().one()
-            return dict(row)
-    finally:
-        engine.dispose()
 
+        return {
+            "total": int(row["total"]),
+            "pd_promedio": float(row["pd_promedio"]),
+            "pd_min": float(row["pd_min"]),
+            "pd_max": float(row["pd_max"]),
+            "prediction_0": int(row["prediction_0"]),
+            "prediction_1": int(row["prediction_1"]),
+            "bajo": int(row["bajo"]),
+            "medio": int(row["medio"]),
+            "alto": int(row["alto"]),
+            "critico": int(row["critico"]),
+            "model_version": MODEL_VERSION,
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error consultando resumen de cartera: {exc}",
+        )
+
+
+# ============================================================
+# CONSULTAR CARTERA
+# ============================================================
 
 @app.get("/portfolio")
 def portfolio(
-    risk: str | None = Query(default=None),
-    limit: int = Query(default=100, ge=1, le=1000),
-    offset: int = Query(default=0, ge=0),
+    risk_level: str | None = Query(
+        default=None,
+        description="BAJO, MEDIO, ALTO o CRITICO",
+    ),
+    prediction: int | None = Query(
+        default=None,
+        ge=0,
+        le=1,
+        description="0 = no default, 1 = default",
+    ),
+    limit: int = Query(
+        default=100,
+        ge=1,
+        le=1000,
+    ),
+    offset: int = Query(
+        default=0,
+        ge=0,
+    ),
 ):
-    where = "WHERE risk_level = :risk" if risk else ""
-    query = text(f"""
-        SELECT *
+    filters = []
+    params = {
+        "limit": limit,
+        "offset": offset,
+    }
+
+    if risk_level:
+        risk_level = risk_level.upper()
+
+        if risk_level not in VALID_RISK_LEVELS:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "risk_level invalido. "
+                    "Valores permitidos: BAJO, MEDIO, ALTO, CRITICO."
+                ),
+            )
+
+        filters.append(
+            "risk_level = :risk_level"
+        )
+
+        params["risk_level"] = risk_level
+
+    if prediction is not None:
+        filters.append(
+            "prediction = :prediction"
+        )
+
+        params["prediction"] = prediction
+
+    where_clause = ""
+
+    if filters:
+        where_clause = (
+            "WHERE "
+            + " AND ".join(filters)
+        )
+
+    query = text(
+        f"""
+        SELECT
+            score_output_id,
+            score_input_id,
+            id,
+            fecha_score,
+            modelo_version,
+            probability_default,
+            prediction,
+            risk_level,
+            recommendation,
+            limit_bal,
+            sex,
+            education,
+            marriage,
+            age,
+            pay_0,
+            pay_max_delay,
+            recent_delay_months,
+            consecutive_delay_months,
+            bill_avg,
+            pay_amt_avg,
+            payment_bill_ratio_total
+
         FROM gold.vw_portfolio_scoring_current
-        {where}
-        ORDER BY probability_default DESC, id
-        LIMIT :limit OFFSET :offset
-    """)
-    params = {"limit": limit, "offset": offset}
-    if risk:
-        params["risk"] = risk.upper()
-    engine = get_engine()
-    try:
-        df = pd.read_sql_query(query, engine, params=params)
-        return df.to_dict(orient="records")
-    finally:
-        engine.dispose()
 
+        {where_clause}
 
-@app.get("/portfolio/{customer_id}")
-def portfolio_customer(customer_id: int):
-    query = text("SELECT * FROM gold.vw_portfolio_scoring_current WHERE id = :id")
-    engine = get_engine()
+        ORDER BY probability_default DESC
+
+        LIMIT :limit
+        OFFSET :offset;
+        """
+    )
+
     try:
         with engine.connect() as conn:
-            row = conn.execute(query, {"id": customer_id}).mappings().first()
-        if row is None:
-            raise HTTPException(status_code=404, detail="Cliente no encontrado en la cartera puntuada")
-        return dict(row)
-    finally:
-        engine.dispose()
+            rows = (
+                conn.execute(
+                    query,
+                    params,
+                )
+                .mappings()
+                .all()
+            )
+
+        return {
+            "count": len(rows),
+            "limit": limit,
+            "offset": offset,
+            "risk_level": risk_level,
+            "prediction": prediction,
+            "results": serialize_rows(rows),
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error consultando cartera: {exc}",
+        )
 
 
-@app.post("/predict/{customer_id}", response_model=PredictionResponse)
-def predict(customer_id: int):
-    model, metadata = get_model_bundle()
-    features = list(metadata["features"])
-    query = text("SELECT * FROM gold.gold_ml WHERE id = :id")
-    engine = get_engine()
-    try:
-        df = pd.read_sql_query(query, engine, params={"id": customer_id})
-    finally:
-        engine.dispose()
-    if df.empty:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado en gold.gold_ml")
-    missing = [c for c in features if c not in df.columns]
-    if missing:
-        raise HTTPException(status_code=500, detail=f"Faltan features: {missing}")
-    probability = float(model.predict_proba(df[features])[:, 1][0])
-    threshold = float(metadata["risk_threshold"])
-    pred = int(probability >= threshold)
-    risk = risk_level(probability)
-    rec = recommendation(df.iloc[0].to_dict(), risk)
-    return PredictionResponse(
-        id=customer_id,
-        model_version=str(metadata["model_version"]),
-        probability_default=probability,
-        prediction=pred,
-        risk_level=risk,
-        recommendation=rec,
-        threshold=threshold,
+# ============================================================
+# CONSULTAR UN CLIENTE
+# ============================================================
+
+@app.get("/portfolio/{customer_id}")
+def portfolio_customer(
+    customer_id: int,
+):
+    query = text(
+        """
+        SELECT
+            score_output_id,
+            score_input_id,
+            id,
+            fecha_score,
+            modelo_version,
+            probability_default,
+            prediction,
+            risk_level,
+            recommendation,
+            limit_bal,
+            sex,
+            education,
+            marriage,
+            age,
+            pay_0,
+            pay_max_delay,
+            recent_delay_months,
+            consecutive_delay_months,
+            bill_avg,
+            pay_amt_avg,
+            payment_bill_ratio_total
+
+        FROM gold.vw_portfolio_scoring_current
+
+        WHERE id = :customer_id
+
+        LIMIT 1;
+        """
     )
+
+    try:
+        with engine.connect() as conn:
+            row = (
+                conn.execute(
+                    query,
+                    {
+                        "customer_id": customer_id,
+                    },
+                )
+                .mappings()
+                .first()
+            )
+
+        if row is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Cliente {customer_id} no encontrado.",
+            )
+
+        return serialize_row(row)
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error consultando cliente: {exc}",
+        )
+
+
+# ============================================================
+# ENDPOINT COMPATIBLE CON STREAMLIT
+# ============================================================
+#
+# IMPORTANTE:
+# En Render Free este endpoint NO vuelve a cargar model.pkl.
+#
+# Devuelve el scoring REAL previamente generado por XGBoost
+# y almacenado en Gold.
+#
+# Esto permite mantener compatibilidad con el dashboard
+# sin superar los 512 MB de memoria del plan gratuito.
+# ============================================================
+
+@app.post("/predict/{customer_id}")
+def predict_customer(
+    customer_id: int,
+):
+    query = text(
+        """
+        SELECT
+            score_output_id,
+            score_input_id,
+            id,
+            fecha_score,
+            modelo_version,
+            probability_default,
+            prediction,
+            risk_level,
+            recommendation,
+            limit_bal,
+            sex,
+            education,
+            marriage,
+            age,
+            pay_0,
+            pay_max_delay,
+            recent_delay_months,
+            consecutive_delay_months,
+            bill_avg,
+            pay_amt_avg,
+            payment_bill_ratio_total
+
+        FROM gold.vw_portfolio_scoring_current
+
+        WHERE id = :customer_id
+
+        LIMIT 1;
+        """
+    )
+
+    try:
+        with engine.connect() as conn:
+            row = (
+                conn.execute(
+                    query,
+                    {
+                        "customer_id": customer_id,
+                    },
+                )
+                .mappings()
+                .first()
+            )
+
+        if row is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Cliente {customer_id} no encontrado.",
+            )
+
+        result = serialize_row(row)
+
+        result["scoring_mode"] = (
+            "persisted_xgboost_scoring"
+        )
+
+        result["message"] = (
+            "Resultado generado previamente por el modelo XGBoost "
+            "y persistido en gold.score_output."
+        )
+
+        return result
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error consultando scoring: {exc}",
+        )
