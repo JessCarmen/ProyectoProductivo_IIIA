@@ -1,4 +1,5 @@
 import os
+import logging
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
@@ -11,6 +12,7 @@ from sqlalchemy import create_engine, text
 # ============================================================
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -116,10 +118,11 @@ def health():
             "model_version": MODEL_VERSION,
         }
 
-    except Exception as exc:
+    except Exception:
+        logger.exception("Error en consulta de FastAPI")
         raise HTTPException(
             status_code=503,
-            detail=f"No fue posible conectar con la base de datos: {exc}",
+            detail="No fue posible conectar con la base de datos.",
         )
 
 
@@ -185,10 +188,11 @@ def portfolio_summary():
             "model_version": MODEL_VERSION,
         }
 
-    except Exception as exc:
+    except Exception:
+        logger.exception("Error en consulta de FastAPI")
         raise HTTPException(
             status_code=500,
-            detail=f"Error consultando resumen de cartera: {exc}",
+            detail="Error consultando resumen de cartera.",
         )
 
 
@@ -313,10 +317,11 @@ def portfolio(
             "results": serialize_rows(rows),
         }
 
-    except Exception as exc:
+    except Exception:
+        logger.exception("Error en consulta de FastAPI")
         raise HTTPException(
             status_code=500,
-            detail=f"Error consultando cartera: {exc}",
+            detail="Error consultando cartera.",
         )
 
 
@@ -385,10 +390,11 @@ def portfolio_customer(
     except HTTPException:
         raise
 
-    except Exception as exc:
+    except Exception:
+        logger.exception("Error en consulta de FastAPI")
         raise HTTPException(
             status_code=500,
-            detail=f"Error consultando cliente: {exc}",
+            detail="Error consultando cliente.",
         )
 
 
@@ -478,8 +484,17 @@ def predict_customer(
     except HTTPException:
         raise
 
-    except Exception as exc:
+    except Exception:
+        logger.exception("Error en consulta de FastAPI")
         raise HTTPException(
             status_code=500,
-            detail=f"Error consultando scoring: {exc}",
+            detail="Error consultando scoring.",
         )
+
+# ============================================================
+# REVISION HUMANA PROTEGIDA (sin reentrenar ni cambiar score_output)
+# ============================================================
+from importlib import import_module
+
+review_module = import_module("05_api.reviews")
+app.include_router(review_module.register_review_routes(engine))

@@ -6,6 +6,7 @@ import altair as alt
 import pandas as pd
 import requests
 import streamlit as st
+from review_ui import render_review_panel
 
 
 # ============================================================
@@ -1068,12 +1069,16 @@ with main_col:
 # ============================================================
 
 if search_customer:
+    st.session_state["nexarisk_selected_customer_id"] = int(customer_id)
+
+selected_customer_id = st.session_state.get("nexarisk_selected_customer_id")
+if selected_customer_id is not None:
     st.divider()
 
     try:
-        customer = load_customer(int(customer_id))
+        customer = load_customer(int(selected_customer_id))
 
-        st.subheader(f"Cliente 360 · #{int(customer_id)}")
+        st.subheader(f"Cliente 360 · #{int(selected_customer_id)}")
 
         x1, x2, x3, x4 = st.columns(4)
 
@@ -1106,6 +1111,8 @@ if search_customer:
         y2.metric("Máximo atraso", customer.get("pay_max_delay", "N/D"))
         y3.metric("Atrasos recientes", customer.get("recent_delay_months", "N/D"))
         y4.metric("Atrasos consecutivos", customer.get("consecutive_delay_months", "N/D"))
+
+        render_review_panel(customer, API_BASE_URL)
 
     except Exception as exc:
         st.error("No fue posible consultar el cliente.")

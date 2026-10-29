@@ -1,0 +1,82 @@
+{
+  "nota": "Auditoría descriptiva sobre test. No demuestra causalidad ni cumplimiento normativo.",
+  "test_consolidado": {
+    "n": 5005,
+    "TP": 919,
+    "FP": 567,
+    "FN": 582,
+    "TN": 2937,
+    "prevalencia": 0.2999000999000999,
+    "tasa_prediccion_positiva": 0.2969030969030969,
+    "fpr": 0.1618150684931507,
+    "fnr": 0.3877415056628914,
+    "precision": 0.6184387617765814,
+    "recall": 0.6122584943371085,
+    "brier": 0.15258746663130607
+  },
+  "test_solo_originales": {
+    "n": 4500,
+    "TP": 578,
+    "FP": 567,
+    "FN": 418,
+    "TN": 2937,
+    "prevalencia": 0.22133333333333333,
+    "tasa_prediccion_positiva": 0.2544444444444444,
+    "fpr": 0.1618150684931507,
+    "fnr": 0.41967871485943775,
+    "precision": 0.5048034934497817,
+    "recall": 0.5803212851405622,
+    "brier": 0.13898332973303062
+  },
+  "criterio_alerta_exploratorio": "Revisar diferencias absolutas de FPR >= 0.05 entre grupos con N>=100. No es umbral legal.",
+  "comparaciones": [
+    {
+      "poblacion": "test_consolidado",
+      "atributo": "grupo_sexo_codificado",
+      "brecha_fpr": 0.07487601247829787,
+      "alerta_exploratoria": true
+    },
+    {
+      "poblacion": "test_consolidado",
+      "atributo": "grupo_edad",
+      "brecha_fpr": 0.04252539912917272,
+      "alerta_exploratoria": false
+    },
+    {
+      "poblacion": "test_consolidado",
+      "atributo": "grupo_educacion_codificado",
+      "brecha_fpr": 0.05204903237099193,
+      "alerta_exploratoria": true
+    },
+    {
+      "poblacion": "test_consolidado",
+      "atributo": "grupo_estado_civil_codificado",
+      "brecha_fpr": 0.016252311832865074,
+      "alerta_exploratoria": false
+    },
+    {
+      "poblacion": "test_solo_originales",
+      "atributo": "grupo_sexo_codificado",
+      "brecha_fpr": 0.07487601247829787,
+      "alerta_exploratoria": true
+    },
+    {
+      "poblacion": "test_solo_originales",
+      "atributo": "grupo_edad",
+      "brecha_fpr": 0.04252539912917272,
+      "alerta_exploratoria": false
+    },
+    {
+      "poblacion": "test_solo_originales",
+      "atributo": "grupo_educacion_codificado",
+      "brecha_fpr": 0.05204903237099193,
+      "alerta_exploratoria": true
+    },
+    {
+      "poblacion": "test_solo_originales",
+      "atributo": "grupo_estado_civil_codificado",
+      "brecha_fpr": 0.016252311832865074,
+      "alerta_exploratoria": false
+    }
+  ]
+}
