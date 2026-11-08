@@ -69,7 +69,10 @@ def register_review_routes(engine):
                    :evidence_reference, :review_note
             FROM gold.vw_portfolio_scoring_current v
             WHERE v.id = :customer_id AND v.score_output_id = :score_output_id
-              AND (:proposed_prediction IS NULL OR :proposed_prediction <> v.prediction)
+              AND (
+                    CAST(:proposed_prediction AS INTEGER) IS NULL
+                    OR CAST(:proposed_prediction AS INTEGER) <> v.prediction
+                )
             RETURNING review_id, customer_id, score_output_id, review_status, created_at
         """)
         try:
