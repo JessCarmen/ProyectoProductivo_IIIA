@@ -119,3 +119,97 @@ def register_review_routes(engine):
             raise HTTPException(status_code=503, detail="No se pudo consultar el historial de revisiones")
 
     return router
+
+
+class SupervisorDecision(BaseModel):
+    review_id: int = Field(gt=0)
+    decision: Literal["APROBADA", "RECHAZADA"]
+    supervisor_id: str = Field(min_length=3, max_length=80)
+    decision_reason: str = Field(min_length=20, max_length=1000)
+
+
+def require_supervisor_key(value: str | None) -> None:
+    configured = os.getenv("SUPERVISOR_API_KEY", "")
+    if len(configured) < 24:
+        raise HTTPException(status_code=503, detail="Modulo supervisor no habilitado")
+    if not value or not hmac.compare_digest(value, configured):
+        raise HTTPException(status_code=401, detail="No autorizado")
+
+
+def register_supervisor_routes(engine):
+    """Rutas adicionales: nunca alteran gold.score_output."""
+
+    @router.get("/supervisor/reviews/pending")
+    def pending_reviews(
+        x_review_key: str | None = Header(default=None),
+        x_supervisor_key: str | None = Header(default=None),
+    ):
+        require_review_key(x_review_key)
+        require_supervisor_key(x_supervisor_key)
+        query = text("""
+            SELECT r.review_id, r.customer_id, r.score_output_id,
+                   r.review_status, r.model_prediction,
+                   r.proposed_prediction, r.reviewer_id,
+                   r.evidence_type, r.evidence_reference,
+                   r.review_note, r.created_at
+            FROM gold.scoring_human_reviews r
+            LEFT JOIN gold.scoring_review_decisions d
+              ON d.review_id = r.review_id
+            WHERE d.review_id IS NULL
+            ORDER BY r.created_at ASC, r.review_id ASC
+            LIMIT 100
+        """)
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(query).mappings().all()
+            return {"results": [jsonable_encoder(dict(row)) for row in rows]}
+        except Exception:
+            logger.exception("Error consultando pendientes")
+            raise HTTPException(status_code=503, detail="No se pudo consultar pendientes")
+
+    @router.post("/supervisor/reviews/decision", status_code=201)
+    def decide_review(
+        payload: SupervisorDecision,
+        x_review_key: str | None = Header(default=None),
+        x_supervisor_key: str | None = Header(default=None),
+    ):
+        require_review_key(x_review_key)
+        require_supervisor_key(x_supervisor_key)
+        supervisor = payload.supervisor_id.strip()
+        reason = payload.decision_reason.strip()
+        if len(supervisor) < 3 or len(reason) < 20:
+            raise HTTPException(status_code=422, detail="Supervisor o justificacion insuficiente")
+        try:
+            with engine.begin() as conn:
+                review = conn.execute(text("""
+                    SELECT reviewer_id, review_status, evidence_reference
+                    FROM gold.scoring_human_reviews
+                    WHERE review_id = :id FOR SHARE
+                """), {"id": payload.review_id}).mappings().first()
+                if review is None:
+                    raise HTTPException(status_code=404, detail="Revision no encontrada")
+                if supervisor.casefold() == review["reviewer_id"].strip().casefold():
+                    raise HTTPException(status_code=422, detail="El supervisor debe ser diferente del analista")
+                if payload.decision == "APROBADA" and review["review_status"] == "CORRECCION_PROPUESTA":
+                    if not review["evidence_reference"] or len(review["evidence_reference"].strip()) < 3:
+                        raise HTTPException(status_code=422, detail="Falta referencia de evidencia")
+                row = conn.execute(text("""
+                    INSERT INTO gold.scoring_review_decisions
+                        (review_id, decision, supervisor_id, decision_reason)
+                    VALUES (:id, :decision, :supervisor, :reason)
+                    ON CONFLICT (review_id) DO NOTHING
+                    RETURNING decision_id, review_id, decision, decided_at
+                """), {
+                    "id": payload.review_id, "decision": payload.decision,
+                    "supervisor": supervisor, "reason": reason,
+                }).mappings().first()
+                if row is None:
+                    raise HTTPException(status_code=409, detail="La revision ya fue decidida")
+            return jsonable_encoder(dict(row))
+        except HTTPException:
+            raise
+        except Exception:
+            logger.exception("Error registrando decision")
+            raise HTTPException(status_code=503, detail="No se pudo registrar la decision")
+
+    return router

@@ -115,3 +115,85 @@ def render_review_panel(customer, api_base_url):
                 st.info("Aún no existen revisiones para este cliente.")
         except requests.RequestException:
             st.error("No fue posible recuperar el historial.")
+
+
+
+def render_supervisor_panel(api_base_url):
+    """Panel administrativo separado del acceso de analistas."""
+    st.divider()
+    st.subheader("Supervisión de revisiones")
+    st.caption("La aprobación no convierte una opinión en un resultado real de pago.")
+
+    api_key = _secret("REVIEW_API_KEY")
+    supervisor_key = _secret("SUPERVISOR_API_KEY")
+    password = _secret("SUPERVISOR_PASSWORD")
+    if min(len(api_key), len(supervisor_key)) < 24 or len(password) < 12:
+        st.info("Módulo supervisor no configurado.")
+        return
+
+    if not st.session_state.get("nexarisk_supervisor_authenticated", False):
+        with st.form("supervisor_login"):
+            entered = st.text_input("Clave de supervisor", type="password")
+            submitted = st.form_submit_button("Acceder")
+        if submitted:
+            if hmac.compare_digest(entered, password):
+                st.session_state["nexarisk_supervisor_authenticated"] = True
+                st.rerun()
+            else:
+                st.error("Clave incorrecta")
+        return
+
+    headers = {"X-Review-Key": api_key, "X-Supervisor-Key": supervisor_key}
+    if st.button("Actualizar revisiones pendientes"):
+        st.session_state.pop("nexarisk_pending_reviews", None)
+    if "nexarisk_pending_reviews" not in st.session_state:
+        try:
+            response = requests.get(
+                f"{api_base_url}/supervisor/reviews/pending",
+                headers=headers, timeout=90,
+            )
+            response.raise_for_status()
+            st.session_state["nexarisk_pending_reviews"] = response.json().get("results", [])
+        except requests.RequestException:
+            st.error("No fue posible consultar revisiones pendientes.")
+            return
+    records = st.session_state["nexarisk_pending_reviews"]
+    if not records:
+        st.success("No hay revisiones pendientes.")
+        return
+    st.dataframe(pd.DataFrame(records), hide_index=True, use_container_width=True)
+    selected = st.selectbox(
+        "Revisión a resolver",
+        options=[r["review_id"] for r in records],
+    )
+    item = next(r for r in records if r["review_id"] == selected)
+    st.write("Analista original:", item["reviewer_id"])
+    st.write("Evidencia declarada:", item.get("evidence_reference") or "No disponible")
+    with st.form(f"supervisor_decision_{selected}"):
+        supervisor_id = st.text_input("Código del supervisor", max_chars=80)
+        decision = st.radio("Decisión", ["RECHAZADA", "APROBADA"])
+        reason = st.text_area("Justificación (mínimo 20 caracteres)", max_chars=1000)
+        confirmed = st.checkbox("Verifiqué la evidencia y soy una persona distinta del analista.")
+        submit = st.form_submit_button("Registrar decisión")
+    if submit:
+        if not confirmed:
+            st.error("Debes confirmar la revisión independiente.")
+            return
+        payload = {
+            "review_id": int(selected),
+            "decision": decision,
+            "supervisor_id": supervisor_id.strip(),
+            "decision_reason": reason.strip(),
+        }
+        try:
+            response = requests.post(
+                f"{api_base_url}/supervisor/reviews/decision",
+                json=payload, headers=headers, timeout=90,
+            )
+            if response.status_code == 201:
+                st.success("Decisión registrada. El scoring original permanece intacto.")
+                st.session_state.pop("nexarisk_pending_reviews", None)
+            else:
+                st.error(f"No se registró la decisión (HTTP {response.status_code}).")
+        except requests.RequestException:
+            st.error("Error de conexión con FastAPI.")

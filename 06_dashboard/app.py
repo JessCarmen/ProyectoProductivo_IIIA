@@ -6,7 +6,7 @@ import altair as alt
 import pandas as pd
 import requests
 import streamlit as st
-from review_ui import render_review_panel
+from review_ui import render_review_panel, render_supervisor_panel
 
 
 # ============================================================
@@ -1136,3 +1136,8 @@ with f2:
 
 with f3:
     st.caption("FastAPI · Supabase · Streamlit")
+
+
+# Acceso administrativo independiente del cliente seleccionado.
+with st.expander("Administración · Supervisor", expanded=False):
+    render_supervisor_panel(API_BASE_URL)

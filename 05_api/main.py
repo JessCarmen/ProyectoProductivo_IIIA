@@ -498,3 +498,4 @@ from importlib import import_module
 
 review_module = import_module("05_api.reviews")
 app.include_router(review_module.register_review_routes(engine))
+review_module.register_supervisor_routes(engine)
