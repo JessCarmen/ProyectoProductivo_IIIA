@@ -56,7 +56,7 @@ def main() -> int:
                 "correcciones_propuestas": """SELECT COUNT(*) FROM gold.scoring_human_reviews
                                             WHERE review_status='CORRECCION_PROPUESTA'""",
                 "decisiones_aprobadas": """SELECT COUNT(*) FROM gold.scoring_review_decisions
-                                            WHERE decision_status='APROBADA'""",
+                                            WHERE decision='APROBADA'""",
                 "resultados_observados": "SELECT COUNT(*) FROM gold.credit_outcomes_verified",
                 "casos_vinculados": "SELECT COUNT(DISTINCT outcome_id) FROM gold.vw_verified_retraining_cases",
             }

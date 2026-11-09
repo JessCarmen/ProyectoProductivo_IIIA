@@ -47,7 +47,7 @@ def main():
                 raise ValueError("La correccion no tiene referencia de evidencia")
             inserted=conn.execute(text("""
                 INSERT INTO gold.scoring_review_decisions
-                    (review_id, decision_status, supervisor_id, decision_note)
+                    (review_id, decision, supervisor_id, decision_reason)
                 VALUES (:review_id,:status,:supervisor,:note)
                 ON CONFLICT (review_id) DO NOTHING
                 RETURNING decision_id
