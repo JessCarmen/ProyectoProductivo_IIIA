@@ -28,3 +28,6 @@ npm-debug.log*
 
 mlflow.db
 mlruns/
+
+# Artefactos locales del experimento académico V3
+04_ml/models/v3_experimental/
