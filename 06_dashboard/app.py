@@ -25,31 +25,29 @@ st.set_page_config(
 # PALETA INSTITUCIONAL
 # ============================================================
 
-MIDNIGHT = "#07111F"
-NAVY = "#0C1B2A"
-SLATE = "#12283A"
-PANEL = "#0E1929"
-PANEL_2 = "#132236"
-BORDER = "#284057"
+MIDNIGHT = "#F4F6F9"
+NAVY = "#11243E"
+SLATE = "#1C3653"
+PANEL = "#FFFFFF"
+PANEL_2 = "#F8FAFC"
+BORDER = "#D8E0EA"
+CYAN = "#16628A"
+BLUE = "#356A9B"
+GOLD = "#C58A2A"
+TEXT = "#15253B"
+MUTED = "#617184"
 
-CYAN = "#19C3C8"
-BLUE = "#62A7F7"
-GOLD = "#D7B56D"
-TEXT = "#EAF1F7"
-MUTED = "#91A2B8"
-
+# Sobriedad visual: los colores de riesgo se reservan para la severidad.
 RISK_COLORS = {
-    "BAJO": "#36C98F",
-    "MEDIO": "#F2D15A",
-    "ALTO": "#F59E42",
-    "CRITICO": "#EF5C6C",
+    "BAJO": "#789F88",
+    "MEDIO": "#E6BC69",
+    "ALTO": "#D99A49",
+    "CRITICO": "#A94458",
 }
-
 CLASS_COLORS = {
-    "Predicción 0": "#5F8FEF",
-    "Predicción 1": "#D7B56D",
+    "Predicción 0": "#789F88",
+    "Predicción 1": "#D5A45D",
 }
-
 
 # ============================================================
 # CSS
@@ -58,219 +56,59 @@ CLASS_COLORS = {
 st.markdown(
     f"""
     <style>
-    .stApp {{
-        background:
-            radial-gradient(circle at 85% 0%, rgba(25,195,200,.06), transparent 28%),
-            linear-gradient(180deg, {MIDNIGHT} 0%, #08101d 100%);
-        color: {TEXT};
-    }}
-
-    [data-testid="stHeader"] {{
-        background: rgba(7,17,31,.88);
-    }}
-
-    .block-container {{
-        max-width: 1780px;
-        padding-top: 0.75rem;
-        padding-bottom: 2rem;
-    }}
-
-    h1, h2, h3, p, label {{
-        color: {TEXT};
-    }}
-
-    .brand-shell {{
-        background: linear-gradient(105deg, #0b1728 0%, #10283a 72%, #123d47 100%);
-        border: 1px solid {BORDER};
-        border-radius: 17px;
-        padding: 20px 24px;
-        margin-bottom: 14px;
-        box-shadow: 0 8px 28px rgba(0,0,0,.24);
-    }}
-
-    .brand-row {{
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-    }}
-
-    .brand-left {{
-        display: flex;
-        align-items: center;
-        gap: 14px;
-    }}
-
-    .brand-mark {{
-        width: 48px;
-        height: 48px;
-        border-radius: 11px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, {CYAN}, #3DD6C8);
-        color: #06111d;
-        font-weight: 900;
-        font-size: 17px;
-        letter-spacing: -.4px;
-    }}
-
-    .brand-name {{
-        font-size: 23px;
-        font-weight: 850;
-        color: {TEXT};
-        line-height: 1;
-    }}
-
-    .brand-sub {{
-        margin-top: 5px;
-        color: {MUTED};
-        font-size: 11px;
-    }}
-
-    .api-state {{
-        text-align: right;
-        color: {MUTED};
-        font-size: 10px;
-        line-height: 1.65;
-    }}
-
-    .api-online {{
-        color: {CYAN};
-        font-size: 10px;
-        font-weight: 800;
-        letter-spacing: .5px;
-    }}
-
-    .kpi {{
-        background: {PANEL};
-        border: 1px solid {BORDER};
-        border-top: 2px solid #19C3C8;
-        border-radius: 13px;
-        padding: 15px 16px;
-        min-height: 104px;
-        box-shadow: 0 5px 18px rgba(0,0,0,.18);
-    }}
-
-    .kpi-label {{
-        color: {MUTED};
-        font-size: 9px;
-        letter-spacing: .65px;
-        font-weight: 800;
-        text-transform: uppercase;
-    }}
-
-    .kpi-value {{
-        color: {TEXT};
-        font-size: 26px;
-        font-weight: 850;
-        margin-top: 6px;
-    }}
-
-    .kpi-note {{
-        color: {MUTED};
-        font-size: 9px;
-        margin-top: 6px;
-    }}
-
-    .panel-title {{
-        color: {TEXT};
-        font-size: 14px;
-        font-weight: 800;
-        margin-bottom: 2px;
-    }}
-
-    .panel-sub {{
-        color: {MUTED};
-        font-size: 9px;
-        margin-bottom: 8px;
-    }}
-
-    .filter-header {{
-        background: linear-gradient(90deg, #16273a, #1a3147);
-        border: 1px solid {BORDER};
-        border-radius: 10px;
-        padding: 12px 13px;
-        color: {TEXT};
-        font-size: 11px;
-        font-weight: 850;
-        letter-spacing: .3px;
-        margin-bottom: 9px;
-    }}
-
-    .filter-card {{
-        background: {PANEL};
-        border: 1px solid {BORDER};
-        border-radius: 13px;
-        padding: 13px 13px 7px 13px;
-        box-shadow: 0 5px 18px rgba(0,0,0,.17);
-        margin-bottom: 12px;
-    }}
-
-    .executive-box {{
-        background: linear-gradient(90deg, rgba(215,181,109,.10), rgba(25,195,200,.05));
-        border: 1px solid rgba(215,181,109,.45);
-        border-left: 4px solid {GOLD};
-        border-radius: 10px;
-        padding: 11px 14px;
-        color: {TEXT};
-        font-size: 10px;
-        margin: 8px 0 15px 0;
-    }}
-
-    div[data-testid="stMetric"] {{
-        background: {PANEL};
-        border: 1px solid {BORDER};
-        border-radius: 12px;
-        padding: 12px;
-    }}
-
-    div[data-testid="stMetricLabel"] {{
-        color: {MUTED};
-    }}
-
-    div[data-testid="stMetricValue"] {{
-        color: {TEXT};
-    }}
-
-    div[data-baseweb="select"] > div {{
-        background: {PANEL_2};
-        border-color: {BORDER};
-        color: {TEXT};
-    }}
-
-    div[data-testid="stNumberInput"] input {{
-        background: {PANEL_2};
-        color: {TEXT};
-    }}
-
-    .stButton > button {{
-        background: {CYAN};
-        color: #07111F;
-        border: none;
-        border-radius: 8px;
-        font-weight: 850;
-    }}
-
-    .stButton > button:hover {{
-        background: #43d6d8;
-        color: #07111F;
-    }}
-
-    [data-testid="stDataFrame"] {{
-        border: 1px solid {BORDER};
-        border-radius: 10px;
-        overflow: hidden;
-    }}
-
-    hr {{
-        border-color: {BORDER};
-    }}
+    /* NexaRisk 2.0: presentación institucional; no modifica lógica de negocio. */
+    .stApp {{background:#F4F6F9;color:{TEXT};}}
+    [data-testid="stHeader"] {{background:rgba(244,246,249,.96);}}
+    .block-container {{max-width:1800px;padding-top:1rem;padding-bottom:2.4rem;}}
+    h1,h2,h3,h4,p,label {{color:{TEXT};}}
+    [data-testid="stMarkdownContainer"] p {{line-height:1.48;}}
+    .brand-shell {{background:#FFFFFF;border:1px solid {BORDER};border-radius:16px;
+        padding:18px 24px;margin-bottom:16px;box-shadow:0 3px 12px rgba(18,37,62,.045);}}
+    .brand-row {{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}}
+    .brand-left {{display:flex;align-items:center;gap:16px;min-width:0;flex-wrap:wrap;}}
+    .brand-mark {{width:54px;height:54px;min-width:54px;border-radius:13px;
+        display:flex;align-items:center;justify-content:center;background:{NAVY};
+        color:#FFFFFF;font-weight:800;font-size:21px;line-height:1;letter-spacing:0;}}
+    .brand-name {{font-size:29px;font-weight:800;color:{NAVY};line-height:1.2;
+        letter-spacing:-.7px;white-space:nowrap;overflow:visible;}}
+    .brand-sub {{margin-top:5px;color:{MUTED};font-size:12px;line-height:1.5;}}
+    .api-state {{color:{MUTED};font-size:11px;line-height:1.7;text-align:right;}}
+    .api-online {{color:#24744E;background:#E8F5EC;border-radius:20px;
+        padding:4px 10px;font-weight:750;letter-spacing:.1px;}}
+    .kpi {{background:#FFFFFF;border:1px solid {BORDER};border-left:4px solid {CYAN};
+        border-radius:14px;padding:18px 15px;min-height:126px;
+        box-shadow:0 3px 12px rgba(18,37,62,.04);}}
+    .kpi-label {{color:{NAVY};font-size:12px;letter-spacing:0;font-weight:700;}}
+    .kpi-value {{color:{NAVY};font-size:27px;font-weight:800;margin-top:8px;line-height:1.2;}}
+    .kpi-note {{color:{MUTED};font-size:11px;margin-top:7px;line-height:1.35;}}
+    .panel-title {{color:{NAVY};font-size:17px;font-weight:800;margin:8px 0 3px;}}
+    .panel-sub {{color:{MUTED};font-size:11px;margin-bottom:10px;}}
+    .filter-header {{background:{NAVY};border:1px solid {NAVY};border-radius:10px;
+        padding:11px 13px;color:#FFFFFF;font-size:12px;font-weight:750;margin-bottom:10px;}}
+    .filter-card {{background:#FFFFFF;border:1px solid {BORDER};border-radius:12px;
+        padding:13px 12px 7px;margin-bottom:13px;}}
+    .executive-box {{background:#F8FAFC;border:1px solid {BORDER};border-left:4px solid {GOLD};
+        border-radius:10px;padding:13px 16px;color:{TEXT};font-size:12px;line-height:1.55;
+        margin:12px 0 16px;}}
+    div[data-testid="stMetric"] {{background:#FFFFFF;border:1px solid {BORDER};border-radius:12px;padding:13px;}}
+    div[data-testid="stMetricLabel"] {{color:{MUTED};}}
+    div[data-testid="stMetricValue"] {{color:{NAVY};}}
+    div[data-baseweb="select"] > div {{background:#FFFFFF;border-color:{BORDER};color:{TEXT};}}
+    div[data-testid="stNumberInput"] input {{background:#FFFFFF;color:{TEXT};}}
+    .stButton > button[kind="primary"],.stButton > button[data-testid="stBaseButton-primary"] {{
+        background:{NAVY};color:#FFFFFF;border:1px solid {NAVY};border-radius:9px;font-weight:700;}}
+    .stButton > button[kind="primary"]:hover,.stButton > button[data-testid="stBaseButton-primary"]:hover {{
+        background:#24476B;color:#FFFFFF;border-color:#24476B;}}
+    .stButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]) {{
+        border-radius:9px;border-color:{BORDER};}}
+    [data-testid="stDataFrame"] {{border:1px solid {BORDER};border-radius:10px;overflow:hidden;}}
+    [data-testid="stAlert"] {{border-radius:11px;}}
+    hr {{border-color:{BORDER};}}
+    @media (max-width:900px) {{.brand-name {{font-size:24px;}} .api-state {{text-align:left;}}}}
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 
 # ============================================================
 # API
@@ -436,13 +274,13 @@ def dark_chart(chart: alt.Chart, height=280):
         chart.properties(height=height)
         .configure_view(strokeOpacity=0)
         .configure_axis(
-            gridColor="#20344B",
-            domainColor="#31475E",
-            tickColor="#31475E",
+            gridColor="#E7ECF2",
+            domainColor="#B5C2D0",
+            tickColor="#B5C2D0",
             labelColor=TEXT,
             titleColor=MUTED,
-            labelFontSize=10,
-            titleFontSize=10,
+            labelFontSize=11,
+            titleFontSize=11,
         )
         .configure_legend(
             labelColor=TEXT,
@@ -483,7 +321,7 @@ st.markdown(
                 </div>
             </div>
             <div class="api-state">
-                <span class="api-online">API ONLINE</span><br>
+                <span class="api-online">● En línea</span><br>
                 Modelo {summary.get("model_version", "N/D")}<br>
                 FastAPI · Supabase · Streamlit
             </div>
@@ -509,16 +347,16 @@ priority_pct = priority / total if total else 0
 k1, k2, k3, k4, k5 = st.columns(5)
 
 with k1:
-    kpi_card("Cartera evaluada", fmt_int(total), "Scoring vigente", CYAN)
+    kpi_card("Cartera evaluada", fmt_int(total), "Scoring vigente", NAVY)
 
 with k2:
-    kpi_card("PD promedio", fmt_pct(summary.get("pd_promedio")), "Probabilidad media", BLUE)
+    kpi_card("PD promedio", fmt_pct(summary.get("pd_promedio")), "Probabilidad media", "#55856B")
 
 with k3:
-    kpi_card("Gestión prioritaria", fmt_int(priority), f"{fmt_pct(priority_pct)} en Alto + Crítico", RISK_COLORS["CRITICO"])
+    kpi_card("Gestión prioritaria", fmt_int(priority), f"{fmt_pct(priority_pct)} en Alto + Crítico", GOLD)
 
 with k4:
-    kpi_card("Predicción = 1", fmt_int(summary.get("prediction_1")), "Potencial incumplimiento", GOLD)
+    kpi_card("Predicción = 1", fmt_int(summary.get("prediction_1")), "Potencial incumplimiento", "#7C8896")
 
 with k5:
     kpi_card("Predicción = 0", fmt_int(summary.get("prediction_0")), "Sin señal de incumplimiento", "#6A7D94")
@@ -590,7 +428,7 @@ with filters_col:
     st.markdown('<div class="filter-header">IDENTIDAD</div>', unsafe_allow_html=True)
     st.caption("NexaRisk")
     st.caption("Credit Risk Command Center")
-    st.caption("Paleta: Midnight · Navy · Cyan · Gold")
+    st.caption("Analista y supervisor · Accesos preservados")
 
 
 # ============================================================
