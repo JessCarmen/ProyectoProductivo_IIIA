@@ -1,0 +1,52 @@
+{
+  "experiment": "V3 historical retraining without changing labels",
+  "training_uses_human_approvals": false,
+  "reason": "Five supervisor approvals are observations, not verified outcomes or corrected input variables",
+  "source": "exported gold_ml_rows.csv and original split_manifest.csv",
+  "train_rows": 23366,
+  "validation_rows": 5006,
+  "test_rows": 5005,
+  "features": 47,
+  "validation_selected_threshold_v3": 0.365,
+  "v2_threshold": 0.38,
+  "v2_test": {
+    "accuracy": 0.7704295704295704,
+    "precision_default": 0.6184387617765814,
+    "recall_default": 0.6122584943371085,
+    "f1_default": 0.6153331101439572,
+    "roc_auc": 0.7998912064711805,
+    "pr_auc": 0.6915348642085702,
+    "brier_score": 0.15258746663130607
+  },
+  "v3_test": {
+    "accuracy": 0.7634365634365634,
+    "precision_default": 0.6023240800516462,
+    "recall_default": 0.6215856095936043,
+    "f1_default": 0.6118032786885246,
+    "roc_auc": 0.7910546317675582,
+    "pr_auc": 0.6808699275892265,
+    "brier_score": 0.15542365610599518
+  },
+  "v2_confusion": [
+    [
+      2937,
+      567
+    ],
+    [
+      582,
+      919
+    ]
+  ],
+  "v3_confusion": [
+    [
+      2888,
+      616
+    ],
+    [
+      568,
+      933
+    ]
+  ],
+  "promotion": "NOT_APPROVED",
+  "caution": "Historical test reused for comparison; further independent evaluation required before deployment."
+}

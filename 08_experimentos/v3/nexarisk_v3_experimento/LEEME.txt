@@ -1,0 +1,23 @@
+NEXARISK - EXPERIMENTO V3 HISTORICO (NO PRODUCCION)
+
+Ejecucion realizada con 33,377 filas de gold_ml_rows.csv y particiones originales.
+23,366 entrenamiento / 5,006 validacion / 5,005 prueba.
+No se modificaron etiquetas historicas ni las predicciones almacenadas en Supabase.
+No se incorporaron las cinco aprobaciones como etiquetas: no existen resultados verificados
+ni valores de variables corregidos con evidencia. El CSV de decisiones adjunto es una
+fotografia anterior y contiene solo dos aprobaciones.
+
+V2: ROC AUC 0.7999; PR AUC 0.6915; F1 0.6153; recall 0.6123; FP 567; FN 582.
+V3: ROC AUC 0.7906; PR AUC 0.6815; F1 0.6122; recall 0.6636; FP 757; FN 505.
+V3 aumenta recall, pero empeora discriminacion, precision, F1, Brier y falsos positivos.
+NO PROMOVER V3. Mantener V2 en Render/Streamlit.
+
+Artefactos:
+- comparacion_v2_v3.json: evaluacion y matrices de confusion
+- predicciones_test_comparadas.csv: 5005 observaciones comparadas
+- v3_candidate.joblib: pipeline experimental y calibrador, solo para entorno confiable
+- ejecutar_v3_local.py: script usado (rutas absolutas de esta sesion, adaptar al entorno)
+
+Para un modelo realmente mejorado por analista y supervisor se requieren correcciones
+concretas de variables, fecha y evidencia, y resultados reales verificados. Aprobaciones
+de observaciones no equivalen a nuevas etiquetas ni validan una reduccion de FP.
