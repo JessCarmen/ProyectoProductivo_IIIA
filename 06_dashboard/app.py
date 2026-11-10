@@ -329,6 +329,16 @@ def load_portfolio(risk_level=None, limit=500):
     return api_get("/portfolio", params=params)
 
 
+@st.cache_data(ttl=60)
+def load_analytics(risk_level="TODOS", prediction="TODAS", min_pd=0):
+    params = {"min_pd": min_pd / 100}
+    if risk_level != "TODOS":
+        params["risk_level"] = risk_level
+    if prediction != "TODAS":
+        params["prediction"] = int(prediction)
+    return api_get("/portfolio/analytics", params=params)
+
+
 def load_customer(customer_id: int):
     return api_get(f"/portfolio/{customer_id}")
 
@@ -613,6 +623,25 @@ if not portfolio_df.empty:
         ]
 
 
+# La API calcula los graficos sobre toda la poblacion filtrada, no sobre
+# los primeros N clientes ordenados por PD.
+try:
+    analytics = load_analytics(risk_filter, prediction_filter, min_pd)
+except Exception as exc:
+    analytics = None
+    with main_col:
+        st.error("No fue posible calcular los graficos de la cartera completa.")
+        st.caption("Los graficos analiticos se ocultan para no mostrar datos sesgados.")
+        with st.expander("Detalle tecnico"):
+            st.exception(exc)
+
+
+def analytics_frame(key):
+    if not analytics:
+        return pd.DataFrame()
+    return pd.DataFrame(analytics.get(key) or [])
+
+
 # ============================================================
 # CONTENIDO PRINCIPAL
 # ============================================================
@@ -717,262 +746,124 @@ with main_col:
     )
 
     # --------------------------------------------------------
+    if analytics:
+        n_filtered = int((analytics.get("overall") or {}).get("clientes") or 0)
+        st.caption(
+            f"Gráficos inferiores: {n_filtered:,} clientes de la cartera filtrada completa. "
+            f"La tabla muestra hasta {row_limit:,} clientes con mayor PD. "
+            "Los indicadores y gráficos superiores corresponden a toda la cartera sin filtros."
+        )
+
     # FILA 2: EXPOSICION / EDAD / MORA
     # --------------------------------------------------------
-
     a1, a2, a3 = st.columns(3, gap="medium")
 
     with a1:
-        section("Exposición por riesgo", "Suma de límites de crédito en la muestra consultada")
-
-        if not portfolio_df.empty and {"risk_level", "limit_bal"}.issubset(portfolio_df.columns):
-            exposure_df = (
-                portfolio_df.groupby("risk_level", dropna=False)["limit_bal"]
-                .sum()
-                .reset_index()
-                .rename(columns={"risk_level": "Riesgo", "limit_bal": "Exposición"})
+        section("Exposición por riesgo", "Suma de límites en toda la cartera filtrada")
+        exposure = analytics_frame("exposure")
+        if not exposure.empty:
+            exposure["exposicion"] = pd.to_numeric(exposure["exposicion"], errors="coerce").fillna(0)
+            chart = alt.Chart(exposure).mark_bar().encode(
+                x=alt.X("categoria:N", sort=["BAJO", "MEDIO", "ALTO", "CRITICO"], title="Riesgo"),
+                y=alt.Y("exposicion:Q", title="Límite total"),
+                color=alt.Color("categoria:N", scale=alt.Scale(
+                    domain=["BAJO", "MEDIO", "ALTO", "CRITICO"],
+                    range=[RISK_COLORS[k] for k in ["BAJO", "MEDIO", "ALTO", "CRITICO"]]), legend=None),
+                tooltip=[alt.Tooltip("categoria:N", title="Riesgo"),
+                         alt.Tooltip("clientes:Q", title="Clientes", format=","),
+                         alt.Tooltip("exposicion:Q", title="Límite total", format=",.0f")],
             )
-
-            exposure_chart = (
-                alt.Chart(exposure_df)
-                .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
-                .encode(
-                    x=alt.X("Riesgo:N", title=None),
-                    y=alt.Y("Exposición:Q", title=None),
-                    color=alt.Color(
-                        "Riesgo:N",
-                        scale=alt.Scale(
-                            domain=["BAJO", "MEDIO", "ALTO", "CRITICO"],
-                            range=[
-                                RISK_COLORS["BAJO"],
-                                RISK_COLORS["MEDIO"],
-                                RISK_COLORS["ALTO"],
-                                RISK_COLORS["CRITICO"],
-                            ],
-                        ),
-                        legend=None,
-                    ),
-                    tooltip=[
-                        alt.Tooltip("Riesgo:N", title="Riesgo"),
-                        alt.Tooltip("Exposición:Q", title="Exposición", format=",.0f"),
-                    ],
-                )
-            )
-
-            st.altair_chart(dark_chart(exposure_chart, 240), use_container_width=True)
+            st.altair_chart(dark_chart(chart, 240), use_container_width=True)
         else:
-            st.info("Sin datos suficientes.")
+            st.info("Sin registros para estos filtros.")
 
     with a2:
-        section("PD por rango de edad", "Promedio de probabilidad de incumplimiento")
-
-        if not portfolio_df.empty and {"age", "probability_default"}.issubset(portfolio_df.columns):
-            age_df = portfolio_df.copy()
-            age_df["Rango edad"] = pd.cut(
-                age_df["age"],
-                bins=[0, 29, 39, 49, 59, 69, 200],
-                labels=["<30", "30–39", "40–49", "50–59", "60–69", "70+"],
+        section("PD por rango de edad", "Promedio sobre todos los clientes filtrados")
+        ages = analytics_frame("age")
+        if not ages.empty:
+            ages["PD"] = pd.to_numeric(ages["pd_promedio"], errors="coerce") * 100
+            chart = alt.Chart(ages).mark_bar(color=BLUE).encode(
+                x=alt.X("categoria:N", sort=["<30", "30-39", "40-49", "50-59", "60-69", "70+", "Sin dato"], title="Edad"),
+                y=alt.Y("PD:Q", title="PD promedio (%)", scale=alt.Scale(domain=[0, 100])),
+                tooltip=[alt.Tooltip("categoria:N", title="Edad"),
+                         alt.Tooltip("clientes:Q", title="Clientes", format=","),
+                         alt.Tooltip("PD:Q", title="PD promedio (%)", format=".2f")],
             )
-
-            age_pd = (
-                age_df.groupby("Rango edad", observed=False)["probability_default"]
-                .mean()
-                .mul(100)
-                .reset_index(name="PD")
-            )
-
-            age_chart = (
-                alt.Chart(age_pd)
-                .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
-                .encode(
-                    x=alt.X("Rango edad:N", title=None),
-                    y=alt.Y("PD:Q", title="PD %"),
-                    color=alt.Color(
-                        "PD:Q",
-                        scale=alt.Scale(range=[BLUE, CYAN, GOLD]),
-                        legend=None,
-                    ),
-                    tooltip=[
-                        alt.Tooltip("Rango edad:N", title="Rango"),
-                        alt.Tooltip("PD:Q", title="PD", format=".1f"),
-                    ],
-                )
-            )
-
-            st.altair_chart(dark_chart(age_chart, 240), use_container_width=True)
+            st.altair_chart(dark_chart(chart, 240), use_container_width=True)
         else:
-            st.info("Sin datos suficientes.")
+            st.info("Sin registros para estos filtros.")
 
     with a3:
-        section("Máximo atraso vs PD", "PD promedio según severidad máxima de atraso")
-
-        if not portfolio_df.empty and {"pay_max_delay", "probability_default"}.issubset(portfolio_df.columns):
-            delay_pd = (
-                portfolio_df.groupby("pay_max_delay")["probability_default"]
-                .mean()
-                .mul(100)
-                .reset_index(name="PD")
-                .sort_values("pay_max_delay")
+        section("Máximo atraso vs PD", "PD media y número de clientes por atraso")
+        delays = analytics_frame("delay")
+        if not delays.empty:
+            delays["PD"] = pd.to_numeric(delays["pd_promedio"], errors="coerce") * 100
+            delays["orden"] = pd.to_numeric(delays["categoria"], errors="coerce").fillna(999)
+            delays = delays.sort_values("orden")
+            chart = alt.Chart(delays).mark_bar(color=CYAN).encode(
+                x=alt.X("categoria:N", sort=delays["categoria"].tolist(), title="Máx. atraso"),
+                y=alt.Y("PD:Q", title="PD promedio (%)", scale=alt.Scale(domain=[0, 100])),
+                tooltip=[alt.Tooltip("categoria:N", title="Máx. atraso"),
+                         alt.Tooltip("clientes:Q", title="Clientes", format=","),
+                         alt.Tooltip("PD:Q", title="PD promedio (%)", format=".2f")],
             )
-
-            delay_chart = (
-                alt.Chart(delay_pd)
-                .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
-                .encode(
-                    x=alt.X("pay_max_delay:O", title="Máx. atraso"),
-                    y=alt.Y("PD:Q", title="PD %"),
-                    color=alt.Color(
-                        "PD:Q",
-                        scale=alt.Scale(range=[CYAN, GOLD, RISK_COLORS["CRITICO"]]),
-                        legend=None,
-                    ),
-                    tooltip=[
-                        alt.Tooltip("pay_max_delay:O", title="Máx. atraso"),
-                        alt.Tooltip("PD:Q", title="PD", format=".1f"),
-                    ],
-                )
-            )
-
-            st.altair_chart(dark_chart(delay_chart, 240), use_container_width=True)
+            st.altair_chart(dark_chart(chart, 240), use_container_width=True)
         else:
-            st.info("Sin datos suficientes.")
+            st.info("Sin registros para estos filtros.")
 
     # --------------------------------------------------------
-    # FILA 3
+    # FILA 3: ATRASOS / RATIOS / EXPOSICION PRIORITARIA
     # --------------------------------------------------------
-
     b1, b2, b3 = st.columns(3, gap="medium")
 
     with b1:
-        section("Atrasos recientes", "Clientes por número de meses con atraso reciente")
-
-        if not portfolio_df.empty and "recent_delay_months" in portfolio_df.columns:
-            recent_df = (
-                portfolio_df["recent_delay_months"]
-                .value_counts(dropna=False)
-                .sort_index()
-                .reset_index()
+        section("Atrasos recientes", "Clientes de la cartera filtrada completa")
+        recent = analytics_frame("recent")
+        if not recent.empty:
+            recent["orden"] = pd.to_numeric(recent["categoria"], errors="coerce").fillna(999)
+            recent = recent.sort_values("orden")
+            chart = alt.Chart(recent).mark_bar(color=GOLD).encode(
+                x=alt.X("categoria:N", sort=recent["categoria"].tolist(), title="Meses con atraso"),
+                y=alt.Y("clientes:Q", title="Clientes"),
+                tooltip=[alt.Tooltip("categoria:N", title="Meses"),
+                         alt.Tooltip("clientes:Q", title="Clientes", format=",")],
             )
-            recent_df.columns = ["Meses", "Clientes"]
-
-            recent_chart = (
-                alt.Chart(recent_df)
-                .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
-                .encode(
-                    x=alt.X("Meses:O", title="Meses con atraso"),
-                    y=alt.Y("Clientes:Q", title=None),
-                    color=alt.Color(
-                        "Meses:O",
-                        scale=alt.Scale(
-                            range=[
-                                RISK_COLORS["BAJO"],
-                                RISK_COLORS["MEDIO"],
-                                RISK_COLORS["ALTO"],
-                                RISK_COLORS["CRITICO"],
-                            ]
-                        ),
-                        legend=None,
-                    ),
-                    tooltip=[
-                        alt.Tooltip("Meses:O", title="Meses"),
-                        alt.Tooltip("Clientes:Q", title="Clientes"),
-                    ],
-                )
-            )
-
-            st.altair_chart(dark_chart(recent_chart, 240), use_container_width=True)
+            st.altair_chart(dark_chart(chart, 240), use_container_width=True)
         else:
-            st.info("Sin datos suficientes.")
+            st.info("Sin registros para estos filtros.")
 
     with b2:
-        section("Pago / facturación", "Distribución del ratio de pago sobre facturación")
-
-        if not portfolio_df.empty and "payment_bill_ratio_total" in portfolio_df.columns:
-            ratio_df = portfolio_df.copy()
-            ratio_df["Banda"] = pd.cut(
-                ratio_df["payment_bill_ratio_total"],
-                bins=[-0.001, 0.25, 0.50, 0.75, 1.00, float("inf")],
-                labels=["0–.25", ".25–.50", ".50–.75", ".75–1", "1+"],
+        section("Pago / facturación", "Distribución del ratio en toda la cartera filtrada")
+        ratios = analytics_frame("ratio")
+        if not ratios.empty:
+            chart = alt.Chart(ratios).mark_bar(color=RISK_COLORS["BAJO"]).encode(
+                x=alt.X("categoria:N", sort=["Negativo", "0-0.25", "0.25-0.50", "0.50-0.75", "0.75-1", ">1", "Sin dato"], title="Ratio"),
+                y=alt.Y("clientes:Q", title="Clientes"),
+                tooltip=[alt.Tooltip("categoria:N", title="Ratio"),
+                         alt.Tooltip("clientes:Q", title="Clientes", format=",")],
             )
-
-            ratio_count = (
-                ratio_df["Banda"]
-                .value_counts(sort=False, dropna=False)
-                .reset_index()
-            )
-            ratio_count.columns = ["Banda", "Clientes"]
-
-            ratio_chart = (
-                alt.Chart(ratio_count)
-                .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
-                .encode(
-                    x=alt.X("Banda:N", title=None),
-                    y=alt.Y("Clientes:Q", title=None),
-                    color=alt.Color(
-                        "Banda:N",
-                        scale=alt.Scale(
-                            range=[
-                                RISK_COLORS["CRITICO"],
-                                RISK_COLORS["ALTO"],
-                                RISK_COLORS["MEDIO"],
-                                CYAN,
-                                RISK_COLORS["BAJO"],
-                            ]
-                        ),
-                        legend=None,
-                    ),
-                    tooltip=[
-                        alt.Tooltip("Banda:N", title="Ratio"),
-                        alt.Tooltip("Clientes:Q", title="Clientes"),
-                    ],
-                )
-            )
-
-            st.altair_chart(dark_chart(ratio_chart, 240), use_container_width=True)
+            st.altair_chart(dark_chart(chart, 240), use_container_width=True)
         else:
-            st.info("Sin datos suficientes.")
+            st.info("Sin registros para estos filtros.")
 
     with b3:
-        section("Top exposición prioritaria", "Mayores líneas dentro de la muestra filtrada")
-
+        section("Top exposición prioritaria", f"Top 10 de los {row_limit} clientes listados (muestra por PD)")
         if not portfolio_df.empty and {"id", "limit_bal", "risk_level"}.issubset(portfolio_df.columns):
-            top_exp = (
-                portfolio_df.sort_values("limit_bal", ascending=False)
-                .head(10)[["id", "limit_bal", "risk_level"]]
-                .copy()
-            )
+            top_exp = portfolio_df.nlargest(10, "limit_bal")[["id", "limit_bal", "risk_level"]].copy()
             top_exp["Cliente"] = top_exp["id"].astype(str)
-
-            top_chart = (
-                alt.Chart(top_exp)
-                .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
-                .encode(
-                    x=alt.X("Cliente:N", sort="-y", title=None),
-                    y=alt.Y("limit_bal:Q", title="Límite"),
-                    color=alt.Color(
-                        "risk_level:N",
-                        scale=alt.Scale(
-                            domain=["BAJO", "MEDIO", "ALTO", "CRITICO"],
-                            range=[
-                                RISK_COLORS["BAJO"],
-                                RISK_COLORS["MEDIO"],
-                                RISK_COLORS["ALTO"],
-                                RISK_COLORS["CRITICO"],
-                            ],
-                        ),
-                        legend=None,
-                    ),
-                    tooltip=[
-                        alt.Tooltip("Cliente:N", title="Cliente"),
-                        alt.Tooltip("limit_bal:Q", title="Límite", format=",.0f"),
-                        alt.Tooltip("risk_level:N", title="Riesgo"),
-                    ],
-                )
+            chart = alt.Chart(top_exp).mark_bar().encode(
+                x=alt.X("Cliente:N", sort="-y", title="Cliente"),
+                y=alt.Y("limit_bal:Q", title="Límite"),
+                color=alt.Color("risk_level:N", scale=alt.Scale(
+                    domain=["BAJO", "MEDIO", "ALTO", "CRITICO"],
+                    range=[RISK_COLORS[k] for k in ["BAJO", "MEDIO", "ALTO", "CRITICO"]]), legend=None),
+                tooltip=[alt.Tooltip("Cliente:N", title="Cliente"),
+                         alt.Tooltip("limit_bal:Q", title="Límite", format=",.0f"),
+                         alt.Tooltip("risk_level:N", title="Riesgo")],
             )
-
-            st.altair_chart(dark_chart(top_chart, 240), use_container_width=True)
+            st.altair_chart(dark_chart(chart, 240), use_container_width=True)
         else:
-            st.info("Sin datos suficientes.")
+            st.info("Sin registros para estos filtros.")
 
     # --------------------------------------------------------
     # CARTERA PRIORIZADA
