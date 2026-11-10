@@ -59,7 +59,7 @@ st.markdown(
     /* NexaRisk UX 3.0: light institutional visual design; business logic unchanged. */
     .stApp {{background:#F3F6FA;color:{TEXT};}}
     [data-testid="stHeader"] {{background:rgba(243,246,250,.98);}}
-    .block-container {{max-width:1680px;padding-top:1.2rem;padding-bottom:2.4rem;}}
+    .block-container {{max-width:1680px;padding-top:2.5rem;padding-bottom:2.4rem;}}
     /* No global h/p/label overrides: sidebar has independent contrast. */
     [data-testid="stMarkdownContainer"] p {{line-height:1.48;}}
     .brand-shell {{background:#FFFFFF;border:1px solid {BORDER};border-radius:16px;
@@ -390,9 +390,6 @@ with st.sidebar:
     st.caption("Modelo productivo: XGBoost V2")
     st.caption("FastAPI · Supabase · Streamlit")
 
-# La navegación conserva los módulos originales y su autenticación.
-main_col = st.container()
-
 # ============================================================
 # KPIs
 # ============================================================
@@ -425,6 +422,9 @@ if page == "Cartera":
 
     st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
 
+# Crear el contenedor DESPUÉS de las tarjetas: Streamlit respeta el orden
+# de creación de contenedores, no el orden en que se rellenan.
+main_col = st.container()
 
 if page == "Cartera":
     # ============================================================
