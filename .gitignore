@@ -31,3 +31,7 @@ mlruns/
 
 # Artefactos locales del experimento académico V3
 04_ml/models/v3_experimental/
+
+# Datos exportados y modelos experimentales, en cualquier variante de mayusculas
+**/gold_ml_rows.csv
+**/v3_candidate.joblib

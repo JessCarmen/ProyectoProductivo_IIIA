@@ -1,23 +1,30 @@
 NEXARISK - EXPERIMENTO V3 HISTORICO (NO PRODUCCION)
 
-Ejecucion realizada con 33,377 filas de gold_ml_rows.csv y particiones originales.
-23,366 entrenamiento / 5,006 validacion / 5,005 prueba.
-No se modificaron etiquetas historicas ni las predicciones almacenadas en Supabase.
-No se incorporaron las cinco aprobaciones como etiquetas: no existen resultados verificados
-ni valores de variables corregidos con evidencia. El CSV de decisiones adjunto es una
-fotografia anterior y contiene solo dos aprobaciones.
+Fuente de verdad: comparacion_v2_v3.json (ejecucion incluida en el ZIP recibido).
+Datos: 23,366 entrenamiento, 5,006 validacion, 5,005 prueba; 47 variables.
+Umbral V2: 0.380; umbral V3: 0.365.
 
-V2: ROC AUC 0.7999; PR AUC 0.6915; F1 0.6153; recall 0.6123; FP 567; FN 582.
-V3: ROC AUC 0.7906; PR AUC 0.6815; F1 0.6122; recall 0.6636; FP 757; FN 505.
-V3 aumenta recall, pero empeora discriminacion, precision, F1, Brier y falsos positivos.
-NO PROMOVER V3. Mantener V2 en Render/Streamlit.
+METRICAS DE TEST
+                         V2        V3
+ROC-AUC               0.7999    0.7911
+PR-AUC                0.6915    0.6809
+Precision clase 1     0.6184    0.6023
+Recall clase 1        0.6123    0.6216
+F1 clase 1            0.6153    0.6118
+Brier score           0.1526    0.1554
+Falsos positivos      567         616
+Falsos negativos      582         568
 
-Artefactos:
-- comparacion_v2_v3.json: evaluacion y matrices de confusion
-- predicciones_test_comparadas.csv: 5005 observaciones comparadas
-- v3_candidate.joblib: pipeline experimental y calibrador, solo para entorno confiable
-- ejecutar_v3_local.py: script usado (rutas absolutas de esta sesion, adaptar al entorno)
+DECISION: NOT_APPROVED. Conservar V2 productivo.
+V3 aumenta recall ligeramente, pero empeora ROC-AUC, PR-AUC, precision, F1 y Brier y genera mas falsos positivos.
 
-Para un modelo realmente mejorado por analista y supervisor se requieren correcciones
-concretas de variables, fecha y evidencia, y resultados reales verificados. Aprobaciones
-de observaciones no equivalen a nuevas etiquetas ni validan una reduccion de FP.
+Las cinco observaciones aprobadas por supervision no fueron incorporadas como etiquetas ni como correcciones verificadas de variables. No se demuestra mejora del modelo por intervencion humana.
+
+Archivos:
+- ejecutar_v3_local.py: reproduce entrenamiento local con gold_ml_rows.csv y split_manifest.csv.
+- comparacion_v2_v3.json: resultados de la ejecucion actual.
+- predicciones_test_comparadas.csv: probabilidades historicas por caso.
+- v3_candidate.joblib: artefacto experimental; no desplegar ni abrir desde fuentes no confiables.
+
+El test historico ya se utilizo para comparaciones; una nueva promocion requiere evaluacion independiente.
+No subir gold_ml_rows.csv ni artefactos binarios experimentales al repositorio publico.
