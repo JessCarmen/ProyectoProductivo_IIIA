@@ -326,6 +326,78 @@ def portfolio(
 
 
 # ============================================================
+# ANALITICA DE CARTERA COMPLETA (NO LIMITADA AL TOP N)
+# ============================================================
+
+@app.get("/portfolio/analytics")
+def portfolio_analytics(
+    risk_level: str | None = Query(default=None),
+    prediction: int | None = Query(default=None, ge=0, le=1),
+    min_pd: float = Query(default=0.0, ge=0.0, le=1.0),
+):
+    """Agregados de toda la poblacion filtrada; nunca del top 250."""
+    if risk_level:
+        risk_level = risk_level.upper()
+        if risk_level not in VALID_RISK_LEVELS:
+            raise HTTPException(status_code=400, detail="risk_level invalido")
+
+    clauses = ["probability_default >= :min_pd"]
+    params = {"min_pd": min_pd}
+    if risk_level:
+        clauses.append("risk_level = :risk_level")
+        params["risk_level"] = risk_level
+    if prediction is not None:
+        clauses.append("prediction = :prediction")
+        params["prediction"] = prediction
+    where = " AND ".join(clauses)
+    base = f"FROM gold.vw_portfolio_scoring_current WHERE {where}"
+    # Las categorias se construyen en SQL sobre la cartera completa.
+    queries = {
+        "overall": f"""SELECT COUNT(*) AS clientes, AVG(probability_default) AS pd_promedio
+                       {base}""",
+        "exposure": f"""SELECT risk_level AS categoria, COUNT(*) AS clientes,
+                            SUM(COALESCE(limit_bal, 0)) AS exposicion
+                            {base} GROUP BY risk_level""",
+        "age": f"""SELECT CASE WHEN age < 30 THEN '<30'
+                              WHEN age < 40 THEN '30-39'
+                              WHEN age < 50 THEN '40-49'
+                              WHEN age < 60 THEN '50-59'
+                              WHEN age < 70 THEN '60-69'
+                              WHEN age IS NOT NULL THEN '70+'
+                              ELSE 'Sin dato' END AS categoria,
+                              COUNT(*) AS clientes, AVG(probability_default) AS pd_promedio
+                              {base} GROUP BY 1""",
+        "delay": f"""SELECT COALESCE(pay_max_delay::text, 'Sin dato') AS categoria,
+                                COUNT(*) AS clientes, AVG(probability_default) AS pd_promedio
+                                {base} GROUP BY 1""",
+        "recent": f"""SELECT COALESCE(recent_delay_months::text, 'Sin dato') AS categoria,
+                                 COUNT(*) AS clientes
+                                 {base} GROUP BY 1""",
+        "ratio": f"""SELECT CASE WHEN payment_bill_ratio_total IS NULL THEN 'Sin dato'
+                              WHEN payment_bill_ratio_total < 0 THEN 'Negativo'
+                              WHEN payment_bill_ratio_total <= 0.25 THEN '0-0.25'
+                              WHEN payment_bill_ratio_total <= 0.50 THEN '0.25-0.50'
+                              WHEN payment_bill_ratio_total <= 0.75 THEN '0.50-0.75'
+                              WHEN payment_bill_ratio_total <= 1.00 THEN '0.75-1'
+                              ELSE '>1' END AS categoria,
+                              COUNT(*) AS clientes
+                              {base} GROUP BY 1""",
+    }
+    try:
+        with engine.connect() as conn:
+            result = {}
+            for key, sql in queries.items():
+                rows = conn.execute(text(sql), params).mappings().all()
+                result[key] = serialize_row(rows[0]) if key == "overall" else serialize_rows(rows)
+        return {"scope": "cartera_filtrada_completa", "filters": {
+            "risk_level": risk_level, "prediction": prediction, "min_pd": min_pd
+        }, **result}
+    except Exception:
+        logger.exception("Error consultando analitica de cartera")
+        raise HTTPException(status_code=500, detail="Error consultando analitica de cartera")
+
+
+# ============================================================
 # CONSULTAR UN CLIENTE
 # ============================================================
 
