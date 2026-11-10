@@ -1,0 +1,19 @@
+APLICAR EN WINDOWS (Cmder)
+
+1. Descomprimir el parche en la raiz del repositorio, manteniendo carpetas. Reemplazar .gitignore y LEEME.txt.
+2. cd /d D:\ICONTINENTAL\Proyecto_Productivo_IIIA\ProyectoProductivo_IIIA_
+3. .venv\Scripts\activate
+4. git lfs pull
+5. python -m pip install -r requirements.txt
+6. python -m pytest 07_tests -m "not integration" -v
+7. Para integracion remota, solo si API_BASE_URL y acceso estan configurados: python -m pytest 07_tests -m integration -v
+8. git status
+9. git check-ignore -v 08_experimentos/v3/gold_ml_rows.csv 08_experimentos/v3/nexarisk_v3_experimento/v3_candidate.joblib
+10. git ls-files 08_experimentos/v3/gold_ml_rows.csv 08_experimentos/v3/nexarisk_v3_experimento/v3_candidate.joblib
+Si el paso 10 devuelve archivos, ya estan versionados: retirarlos del indice con git rm --cached RUTA (no borra copia local).
+11. git add .gitignore docs/CIERRE_TECNICO_NEXARISK.md docs/GUION_DEFENSA_NEXARISK.md 08_experimentos/v3/nexarisk_v3_experimento/LEEME.txt
+12. git diff --cached --stat
+13. git commit -m "Cierra documentacion y proteccion de experimento V3"
+14. git push origin main
+
+No modificar model.pkl, no promover V3, no publicar gold_ml_rows.csv.
