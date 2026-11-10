@@ -25,28 +25,28 @@ st.set_page_config(
 # PALETA INSTITUCIONAL
 # ============================================================
 
-MIDNIGHT = "#F4F6F9"
-NAVY = "#11243E"
-SLATE = "#1C3653"
+MIDNIGHT = "#F3F6FA"
+NAVY = "#10243F"
+SLATE = "#233E5F"
 PANEL = "#FFFFFF"
 PANEL_2 = "#F8FAFC"
 BORDER = "#D8E0EA"
-CYAN = "#16628A"
-BLUE = "#356A9B"
+CYAN = "#2B648B"
+BLUE = "#7199C2"
 GOLD = "#C58A2A"
 TEXT = "#15253B"
 MUTED = "#617184"
 
 # Sobriedad visual: los colores de riesgo se reservan para la severidad.
 RISK_COLORS = {
-    "BAJO": "#789F88",
-    "MEDIO": "#E6BC69",
-    "ALTO": "#D99A49",
-    "CRITICO": "#A94458",
+    "BAJO": "#76A58B",
+    "MEDIO": "#D6B36C",
+    "ALTO": "#CB925E",
+    "CRITICO": "#B65A68",
 }
 CLASS_COLORS = {
-    "Predicción 0": "#789F88",
-    "Predicción 1": "#D5A45D",
+    "Predicción 0": "#76A58B",
+    "Predicción 1": "#D6B36C",
 }
 
 # ============================================================
@@ -56,17 +56,17 @@ CLASS_COLORS = {
 st.markdown(
     f"""
     <style>
-    /* NexaRisk 2.0: presentación institucional; no modifica lógica de negocio. */
-    .stApp {{background:#F4F6F9;color:{TEXT};}}
-    [data-testid="stHeader"] {{background:rgba(244,246,249,.96);}}
-    .block-container {{max-width:1800px;padding-top:1rem;padding-bottom:2.4rem;}}
-    h1,h2,h3,h4,p,label {{color:{TEXT};}}
+    /* NexaRisk UX 3.0: light institutional visual design; business logic unchanged. */
+    .stApp {{background:#F3F6FA;color:{TEXT};}}
+    [data-testid="stHeader"] {{background:rgba(243,246,250,.98);}}
+    .block-container {{max-width:1680px;padding-top:1.2rem;padding-bottom:2.4rem;}}
+    /* No global h/p/label overrides: sidebar has independent contrast. */
     [data-testid="stMarkdownContainer"] p {{line-height:1.48;}}
     .brand-shell {{background:#FFFFFF;border:1px solid {BORDER};border-radius:16px;
         padding:18px 24px;margin-bottom:16px;box-shadow:0 3px 12px rgba(18,37,62,.045);}}
     .brand-row {{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}}
     .brand-left {{display:flex;align-items:center;gap:16px;min-width:0;flex-wrap:wrap;}}
-    .brand-mark {{width:54px;height:54px;min-width:54px;border-radius:13px;
+    .brand-mark {{width:52px;height:52px;min-width:52px;border-radius:12px;
         display:flex;align-items:center;justify-content:center;background:{NAVY};
         color:#FFFFFF;font-weight:800;font-size:21px;line-height:1;letter-spacing:0;}}
     .brand-name {{font-size:29px;font-weight:800;color:{NAVY};line-height:1.2;
@@ -76,7 +76,7 @@ st.markdown(
     .api-online {{color:#24744E;background:#E8F5EC;border-radius:20px;
         padding:4px 10px;font-weight:750;letter-spacing:.1px;}}
     .kpi {{background:#FFFFFF;border:1px solid {BORDER};border-left:4px solid {CYAN};
-        border-radius:14px;padding:18px 15px;min-height:126px;
+        border-radius:13px;padding:19px 17px;min-height:132px;
         box-shadow:0 3px 12px rgba(18,37,62,.04);}}
     .kpi-label {{color:{NAVY};font-size:12px;letter-spacing:0;font-weight:700;}}
     .kpi-value {{color:{NAVY};font-size:27px;font-weight:800;margin-top:8px;line-height:1.2;}}
@@ -119,7 +119,30 @@ st.markdown(
     [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {{color:#B9CBDF !important;}}
     .stApp [data-testid="stVegaLiteChart"] {{background:#FFFFFF;border:1px solid #D8E0EA;border-radius:13px;padding:10px;}}
     .stApp [data-testid="stVegaLiteChart"] canvas {{background:#FFFFFF;}}
-    [data-testid="stHeader"] {{background:rgba(244,246,249,.96);}}
+    /* Real chart cards: white background, spacing and readable labels. */
+    .stApp [data-testid="stVegaLiteChart"] {{background:#FFFFFF !important;
+        border:1px solid #D8E0EA;border-radius:14px;padding:16px 12px 8px;
+        box-shadow:0 2px 9px rgba(16,36,63,.035);}}
+    .stApp [data-testid="stVegaLiteChart"] canvas,
+    .stApp [data-testid="stVegaLiteChart"] svg {{background:#FFFFFF !important;}}
+    /* Streamlit native table + progress column must match the light UI. */
+    .stApp [data-testid="stDataFrame"] {{background:#FFFFFF !important;
+        border:1px solid #D8E0EA;border-radius:12px;overflow:hidden;}}
+    .stApp [data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] {{background:#FFFFFF !important;}}
+    .stApp [data-testid="stDataFrame"] canvas {{background:#FFFFFF !important;}}
+    .stApp [data-testid="stDownloadButton"] button {{background:#FFFFFF !important;
+        color:#10243F !important;border:1px solid #BAC8D8 !important;
+        font-weight:650 !important;min-height:42px;}}
+    .stApp [data-testid="stDownloadButton"] button:hover {{background:#EAF0F7 !important;}}
+    .stApp [data-testid="stMarkdownContainer"] .panel-title {{font-size:17px;}}
+    [data-testid="stSidebar"] {{min-width:252px;}}
+    [data-testid="stSidebar"] [data-testid="stRadio"] label {{padding:6px 5px;}}
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] {{gap:4px;}}
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {{background:#294B70;border-radius:8px;}}
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {{background:#233D5D;border-radius:8px;}}
+    @media (max-width:1100px) {{.kpi-value {{font-size:23px;}} .kpi-label {{font-size:11px;}}}}
+
+    [data-testid="stHeader"] {{background:rgba(243,246,250,.98);}}
     </style>
     """,
     unsafe_allow_html=True,
@@ -285,23 +308,19 @@ def kpi_card(label: str, value: str, note: str, accent: str):
 
 
 def dark_chart(chart: alt.Chart, height=280):
+    """Institutional LIGHT chart. Explicit Vega theme prevents dark chart regression."""
     return (
-        chart.properties(height=height, background="#FFFFFF", padding={"left": 8, "right": 12, "top": 10, "bottom": 10})
+        chart.properties(height=height, background="#FFFFFF",
+                         padding={"left": 10, "right": 14, "top": 18, "bottom": 10})
         .configure_view(strokeOpacity=0, fill="#FFFFFF")
         .configure_axis(
-            gridColor="#E7ECF2",
-            gridOpacity=0.85,
-            domainColor="#B5C2D0",
-            tickColor="#B5C2D0",
-            labelColor=TEXT,
-            titleColor=MUTED,
-            labelFontSize=11,
-            titleFontSize=11,
+            gridColor="#E8EDF4", gridOpacity=0.8, gridWidth=1,
+            domain=False, ticks=False,
+            labelColor="#43546A", titleColor="#52657A",
+            labelFont="Arial", titleFont="Arial",
+            labelFontSize=11, titleFontSize=11, labelPadding=8,
         )
-        .configure_legend(
-            labelColor=TEXT,
-            titleColor=MUTED,
-        )
+        .configure_legend(labelColor="#43546A", titleColor="#52657A")
         .configure(background="#FFFFFF")
     )
 
@@ -404,7 +423,7 @@ if page == "Cartera":
     with k5:
         kpi_card("Predicción = 0", fmt_int(summary.get("prediction_0")), "Sin señal de incumplimiento", "#6A7D94")
 
-    st.write("")
+    st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
 
 
 if page == "Cartera":
@@ -505,7 +524,12 @@ if page == "Cartera":
                 )
             )
 
-            st.altair_chart(dark_chart(risk_chart, 300), use_container_width=True, theme=None)
+            risk_labels = alt.Chart(risk_df).mark_text(dy=-10, color=NAVY, fontSize=12, fontWeight="bold").encode(
+                x=alt.X("Nivel:N", sort=["BAJO", "MEDIO", "ALTO", "CRITICO"]),
+                y=alt.Y("Clientes:Q"),
+                text=alt.Text("Clientes:Q", format=",.0f"),
+            )
+            st.altair_chart(dark_chart(risk_chart + risk_labels, 265), use_container_width=True, theme=None)
 
         with c2:
             section("Clasificación del modelo", "Salida binaria de la cartera completa")
@@ -544,7 +568,11 @@ if page == "Cartera":
                 )
             )
 
-            st.altair_chart(dark_chart(class_chart, 300), use_container_width=True, theme=None)
+            class_labels = alt.Chart(class_df).mark_text(dy=-10, color=NAVY, fontSize=12, fontWeight="bold").encode(
+                x=alt.X("Clase:N"), y=alt.Y("Clientes:Q"),
+                text=alt.Text("Clientes:Q", format=",.0f"),
+            )
+            st.altair_chart(dark_chart(class_chart + class_labels, 265), use_container_width=True, theme=None)
 
         st.markdown(
             f"""
@@ -580,7 +608,7 @@ if page == "Cartera":
                 exposure["exposicion"] = pd.to_numeric(exposure["exposicion"], errors="coerce").fillna(0)
                 chart = alt.Chart(exposure).mark_bar().encode(
                     x=alt.X("categoria:N", sort=["BAJO", "MEDIO", "ALTO", "CRITICO"], title="Riesgo"),
-                    y=alt.Y("exposicion:Q", title="Límite total"),
+                    y=alt.Y("exposicion:Q", title="Límite total", axis=alt.Axis(format="~s")),
                     color=alt.Color("categoria:N", scale=alt.Scale(
                         domain=["BAJO", "MEDIO", "ALTO", "CRITICO"],
                         range=[RISK_COLORS[k] for k in ["BAJO", "MEDIO", "ALTO", "CRITICO"]]), legend=None),
@@ -588,7 +616,7 @@ if page == "Cartera":
                              alt.Tooltip("clientes:Q", title="Clientes", format=","),
                              alt.Tooltip("exposicion:Q", title="Límite total", format=",.0f")],
                 )
-                st.altair_chart(dark_chart(chart, 240), use_container_width=True, theme=None)
+                st.altair_chart(dark_chart(chart, 225), use_container_width=True, theme=None)
             else:
                 st.info("Sin registros para estos filtros.")
 
@@ -604,7 +632,7 @@ if page == "Cartera":
                              alt.Tooltip("clientes:Q", title="Clientes", format=","),
                              alt.Tooltip("PD:Q", title="PD promedio (%)", format=".2f")],
                 )
-                st.altair_chart(dark_chart(chart, 240), use_container_width=True, theme=None)
+                st.altair_chart(dark_chart(chart, 225), use_container_width=True, theme=None)
             else:
                 st.info("Sin registros para estos filtros.")
 
@@ -622,7 +650,7 @@ if page == "Cartera":
                              alt.Tooltip("clientes:Q", title="Clientes", format=","),
                              alt.Tooltip("PD:Q", title="PD promedio (%)", format=".2f")],
                 )
-                st.altair_chart(dark_chart(chart, 240), use_container_width=True, theme=None)
+                st.altair_chart(dark_chart(chart, 225), use_container_width=True, theme=None)
             else:
                 st.info("Sin registros para estos filtros.")
 
@@ -643,7 +671,7 @@ if page == "Cartera":
                     tooltip=[alt.Tooltip("categoria:N", title="Meses"),
                              alt.Tooltip("clientes:Q", title="Clientes", format=",")],
                 )
-                st.altair_chart(dark_chart(chart, 240), use_container_width=True, theme=None)
+                st.altair_chart(dark_chart(chart, 225), use_container_width=True, theme=None)
             else:
                 st.info("Sin registros para estos filtros.")
 
@@ -657,7 +685,7 @@ if page == "Cartera":
                     tooltip=[alt.Tooltip("categoria:N", title="Ratio"),
                              alt.Tooltip("clientes:Q", title="Clientes", format=",")],
                 )
-                st.altair_chart(dark_chart(chart, 240), use_container_width=True, theme=None)
+                st.altair_chart(dark_chart(chart, 225), use_container_width=True, theme=None)
             else:
                 st.info("Sin registros para estos filtros.")
 
@@ -676,7 +704,7 @@ if page == "Cartera":
                              alt.Tooltip("limit_bal:Q", title="Límite", format=",.0f"),
                              alt.Tooltip("risk_level:N", title="Riesgo")],
                 )
-                st.altair_chart(dark_chart(chart, 240), use_container_width=True, theme=None)
+                st.altair_chart(dark_chart(chart, 225), use_container_width=True, theme=None)
             else:
                 st.info("Sin registros para estos filtros.")
 
@@ -742,7 +770,7 @@ if page == "Cartera":
                 display_df,
                 use_container_width=True,
                 hide_index=True,
-                height=500,
+                height=430,
                 column_config={
                     "Cliente": st.column_config.NumberColumn("Cliente", format="%d"),
                     "PD %": st.column_config.ProgressColumn(
